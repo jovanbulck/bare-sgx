@@ -14,8 +14,8 @@
 #include <unistd.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include "defines.h"
-#include "main.h"
+#include "baresgx/urts.h"
+#include "internal/elf-enclave.h"
 
 /*
  * FIXME: OpenSSL 3.0 has deprecated some functions. For now just ignore
@@ -157,6 +157,10 @@ static inline const BIGNUM *get_modulus(RSA *key)
 	RSA_get0_key(key, &n, NULL, NULL);
 	return n;
 }
+
+
+extern unsigned char sign_key[];
+extern unsigned char sign_key_end[];
 
 static RSA *gen_sign_key(void)
 {

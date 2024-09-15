@@ -16,8 +16,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include "defines.h"
-#include "main.h"
+#include "baresgx/urts.h"
+#include "internal/elf-enclave.h"
 
 void encl_delete(struct encl *encl)
 {
@@ -367,4 +367,51 @@ bool encl_build(struct encl *encl)
 	}
 
 	return true;
+}
+
+/*
+ * Return the offset in the enclave where the TCS segment can be found.
+ * The first RW segment loaded is the TCS.
+ */
+static off_t encl_get_tcs_offset(struct encl *encl)
+{
+	int i;
+
+	for (i = 0; i < encl->nr_segments; i++) {
+		struct encl_segment *seg = &encl->segment_tbl[i];
+
+		if (i == 0 && seg->prot == (PROT_READ | PROT_WRITE))
+			return seg->offset;
+	}
+
+	return -1;
+}
+
+void* baresgx_load_elf_enclave(const char *path)
+{
+    struct encl encl;
+    int i;
+
+    debug("parsing enclave binary '%s'..", path);
+    ASSERT( encl_load(path, &encl, /*heap_size=*/PAGE_SIZE) );
+
+    debug("measuring enclave binary..");
+    ASSERT( encl_measure(&encl) );
+
+    debug("loading enclave binary..");
+    ASSERT( encl_build(&encl) );
+
+    debug("mmapping loaded enclave..");
+    for (i = 0; i < encl.nr_segments; i++) {
+    	struct encl_segment *seg = &encl.segment_tbl[i];
+    
+    	ASSERT( mmap((void *)encl.encl_base + seg->offset, seg->size,
+    		    seg->prot, MAP_SHARED | MAP_FIXED, encl.fd, 0) != MAP_FAILED);
+    }
+
+    #if BARESGX_DEBUG
+        pretty_print_encl(&encl);
+    #endif
+
+    return (void*) (encl.encl_base + encl_get_tcs_offset(&encl));
 }
