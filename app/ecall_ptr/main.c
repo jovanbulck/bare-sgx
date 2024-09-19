@@ -3,6 +3,7 @@
 #include "enclave/test_encl.h"
 
 #define ENCLAVE_PATH    "enclave/encl.elf"
+#define ENCLAVE_DEBUG   0
 
 int main(void)
 {
@@ -10,13 +11,13 @@ int main(void)
     uint64_t rv = -1;
     void *tcs;
 
-    tcs = baresgx_load_elf_enclave(ENCLAVE_PATH);
-    info("loaded enclave at %p", tcs);
+    tcs = baresgx_load_elf_enclave(ENCLAVE_PATH, ENCLAVE_DEBUG);
+    baresgx_info("loaded enclave at %p", tcs);
 
-    info("reading enclave memory..");
+    baresgx_info("reading enclave memory..");
     printf("\tL mem at %p is %lx\n", (void*) tcs, *((uint64_t*) tcs));
 
-    info("calling enclave TCS..");
+    baresgx_info("calling enclave TCS..");
 
     arg.header.type = ENCL_OP_ADD;
     arg.val1 = 1300;

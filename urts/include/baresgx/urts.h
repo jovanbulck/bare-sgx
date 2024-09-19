@@ -7,9 +7,9 @@
 #include <asm/sgx.h>
 #include <stdlib.h>
 
-#define BARESGX_DEBUG           1
+#define BARESGX_DEBUG           0
 
-#define ASSERT(cond)                                                    \
+#define BARESGX_ASSERT(cond)                                            \
     do {                                                                \
         if (!(cond))                                                    \
         {                                                               \
@@ -18,20 +18,20 @@
         }                                                               \
     } while(0)
 
-#define info(msg, ...)                                                  \
+#define baresgx_info(msg, ...)                                          \
     do {                                                                \
         printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);              \
         fflush(stdout);                                                 \
     } while(0)
 
 #if BARESGX_DEBUG
-    #define debug(msg, ...)                                                 \
-        do {                                                                \
-            printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);              \
-            fflush(stdout);                                                 \
+    #define baresgx_debug(msg, ...)                                     \
+        do {                                                            \
+            printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);          \
+            fflush(stdout);                                             \
         } while(0)
 #else
-    #define debug(msg, ...)
+    #define baresgx_debug(msg, ...)
 #endif
 
 /*
@@ -40,8 +40,13 @@
  *
  * @return      load address of the first TCS in the enclave
  */
-void* baresgx_load_elf_enclave(const char* path);
+void* baresgx_load_elf_enclave(const char* path, int debug);
 
 uint64_t baresgx_enter_enclave(void* tcs, uint64_t arg1);
+
+/* Custom AEP get/set functions for SGX-Step */
+void* sgx_get_aep(void);
+void  sgx_set_aep(void* aep);
+void* sgx_get_tcs(void);
 
 #endif

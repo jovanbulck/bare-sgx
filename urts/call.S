@@ -8,11 +8,11 @@
 baresgx_enter_enclave:
     mov $2, %rax
     mov %rdi, %rbx
-    lea baresgx_aep(%rip), %rcx
+    mov baresgx_aep_pointer(%rip), %rcx
     enclu
-
     mov %rsi, %rax
     ret
 
-baresgx_aep:
+    .global baresgx_default_aep
+baresgx_default_aep:
     enclu

@@ -46,7 +46,7 @@ bool encl_measure(struct encl *encl);
 /**
  * Create the enclave prepared in @param(encl->sigstruct) in EPC memory.
  */
-bool encl_build(struct encl *encl);
+bool encl_build(struct encl *encl, int debug);
 
 void encl_delete(struct encl *encl);
 

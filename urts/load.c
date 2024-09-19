@@ -19,6 +19,8 @@
 #include "baresgx/urts.h"
 #include "internal/elf-enclave.h"
 
+extern void *baresgx_tcs;
+
 void encl_delete(struct encl *encl)
 {
 	struct encl_segment *heap_seg;
@@ -77,7 +79,7 @@ err:
 	return false;
 }
 
-static bool encl_ioc_create(struct encl *encl)
+static bool encl_ioc_create(struct encl *encl, int debug)
 {
 	struct sgx_secs *secs = &encl->secs;
 	struct sgx_enclave_create ioc;
@@ -88,6 +90,8 @@ static bool encl_ioc_create(struct encl *encl)
 	memset(secs, 0, sizeof(*secs));
 	secs->ssa_frame_size = 1;
 	secs->attributes = SGX_ATTR_MODE64BIT;
+	if (debug)
+        	secs->attributes |= SGX_ATTR_DEBUG;
 	secs->xfrm = 3;
 	secs->base = encl->encl_base;
 	secs->size = encl->encl_size;
@@ -336,7 +340,7 @@ static bool encl_map_area(struct encl *encl)
 	return true;
 }
 
-bool encl_build(struct encl *encl)
+bool encl_build(struct encl *encl, int debug)
 {
 	struct sgx_enclave_init ioc;
 	int ret;
@@ -345,7 +349,7 @@ bool encl_build(struct encl *encl)
 	if (!encl_map_area(encl))
 		return false;
 
-	if (!encl_ioc_create(encl))
+	if (!encl_ioc_create(encl, debug))
 		return false;
 
 	/*
@@ -387,25 +391,25 @@ static off_t encl_get_tcs_offset(struct encl *encl)
 	return -1;
 }
 
-void* baresgx_load_elf_enclave(const char *path)
+void* baresgx_load_elf_enclave(const char *path, int debug)
 {
     struct encl encl;
     int i;
 
-    debug("parsing enclave binary '%s'..", path);
-    ASSERT( encl_load(path, &encl, /*heap_size=*/PAGE_SIZE) );
+    baresgx_debug("parsing enclave binary '%s'..", path);
+    BARESGX_ASSERT( encl_load(path, &encl, /*heap_size=*/PAGE_SIZE) );
 
-    debug("measuring enclave binary..");
-    ASSERT( encl_measure(&encl) );
+    baresgx_debug("measuring enclave binary..");
+    BARESGX_ASSERT( encl_measure(&encl) );
 
-    debug("loading enclave binary..");
-    ASSERT( encl_build(&encl) );
+    baresgx_debug("loading enclave binary..");
+    BARESGX_ASSERT( encl_build(&encl, debug) );
 
-    debug("mmapping loaded enclave..");
+    baresgx_debug("mmapping loaded enclave..");
     for (i = 0; i < encl.nr_segments; i++) {
     	struct encl_segment *seg = &encl.segment_tbl[i];
     
-    	ASSERT( mmap((void *)encl.encl_base + seg->offset, seg->size,
+    	BARESGX_ASSERT( mmap((void *)encl.encl_base + seg->offset, seg->size,
     		    seg->prot, MAP_SHARED | MAP_FIXED, encl.fd, 0) != MAP_FAILED);
     }
 
@@ -413,5 +417,6 @@ void* baresgx_load_elf_enclave(const char *path)
         pretty_print_encl(&encl);
     #endif
 
-    return (void*) (encl.encl_base + encl_get_tcs_offset(&encl));
+    baresgx_tcs = (void*) (encl.encl_base + encl_get_tcs_offset(&encl));
+    return baresgx_tcs;
 }
