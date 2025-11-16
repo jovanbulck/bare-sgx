@@ -1,0 +1,9 @@
+rootfs.ext2
+*.o
+*.order
+*.symvers
+*.mod.*
+*.mod
+*.cmd
+.*.cmd
+*.swp

@@ -30,6 +30,8 @@ Example use cases include:
 
 - **[SGX-Step](https://github.com/jovanbulck/sgx-step) integration** for rapid attack prototyping, including single-stepping and controlled-channel attacks.
 
+- **[Buildroot](buildroot)** integration for packaging `bare-sgx` enclaves in minimal, self-contained VM images with virtualized SGX support.
+
 ### Trusted runtime
 
 - Minimal and **fully customizable enclave skeletons** in pure [assembly](app/ecall_asm/enclave) with optional bootstrapping to [C code](app/ecall_ptr/enclave).
