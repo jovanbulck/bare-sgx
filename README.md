@@ -1,9 +1,9 @@
 # Minimal SGX Enclave Development on Bare-Metal Linux Platforms [![CI](https://github.com/jovanbulck/bare-sgx/actions/workflows/ci.yaml/badge.svg)](https://github.com/jovanbulck/bare-sgx/actions/workflows/ci.yaml) [![License](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="doc/bare-sgx-logo-white.svg">
-  <source media="(prefers-color-scheme: light)" srcset="doc/bare-sgx-logo.svg">
-  <img alt="bare-sgx-logo" src="doc/bare-sgx-logo.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="doc/bare-sgx-logo-white.svg" align="left">
+  <source media="(prefers-color-scheme: light)" srcset="doc/bare-sgx-logo.svg" align="left">
+  <img alt="bare-sgx-logo" src="doc/bare-sgx-logo.svg" align="left">
 </picture>
 
 This repository provides a minimal, fully customizable framework for developing Intel SGX enclaves directly on bare-metal Linux, without relying on bloated external SDKs. It offers a clean, low-level starting point for building minimalist enclaves in assembly or C, interfacing directly with the upstream Linux SGX driver.
@@ -35,13 +35,14 @@ Example use cases include:
 ### Trusted runtime
 
 - Minimal and **fully customizable enclave skeletons** in pure [assembly](app/ecall_asm/enclave) with optional bootstrapping to [C code](app/ecall_ptr/enclave).
-- (Optional) **[`bare-trts`](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/trts/bare-trts) trusted runtime** (to be upstreamed), featuring:
+- Optional **[`bare-trts`](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/trts/bare-trts) trusted runtime** (to be upstreamed), featuring:
     - Auto-generated secure bridge code for interfaces defined in Enclave Definition Language (EDL) via Intel's unmodified `edger8r` tool.
-    - Minimal embedded `malloc` implementation from FreeRTOS.
-- [HACL* integration](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/app/bare-crypto-app/enclave) for formally verified **cryptographic primitives** (to be upstreamed)
+    - Minimal embedded `malloc` (current implementation from FreeRTOS).
+- Optional [HACL* integration](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/app/bare-crypto-app/enclave) for formally verified **cryptographic primitives** (to be upstreamed)
 
 ## :checkered_flag: Wishlist / Roadmap
 
 - More and improved example enclaves.
 - Support [SGXS format](https://github.com/fortanix/rust-sgx/tree/master/intel-sgx/sgxs-tools) for building and loading enclaves, replacing the custom ELF format currently used by the URTS loader. (Note: SGXS files can currently be extracted using [sgx-tracer](https://github.com/pandora-tee/sgx-tracer).)
-- Exception handling and AEX-Notify support (work in progress)
+- Exception handling and AEX-Notify support (work in progress).
+- Formal verification.
