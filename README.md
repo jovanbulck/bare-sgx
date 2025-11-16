@@ -1,6 +1,10 @@
 # Minimal SGX Enclave Development on Bare-Metal Linux Platforms
 
-![bare-sgx-logo](doc/bare-sgx-logo.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/bare-sgx-logo-white.svg">
+  <source media="(prefers-color-scheme: light)" srcset="doc/bare-sgx-logo.svg">
+  <img alt="bare-sgx-logo" src="doc/bare-sgx-logo.svg">
+</picture>
 
 This repository provides a minimal, fully customizable framework for developing Intel SGX enclaves directly on bare-metal Linux, without relying on bloated external SDKs. It offers a clean, low-level starting point for building minimalist enclaves in assembly or C, interfacing directly with the upstream Linux SGX driver.
 
