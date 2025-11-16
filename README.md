@@ -1,4 +1,4 @@
-# Minimal SGX Enclave Development on Bare-Metal Linux Platforms
+# Minimal SGX Enclave Development on Bare-Metal Linux Platforms [![CI](https://github.com/jovanbulck/bare-sgx/actions/workflows/ci.yaml/badge.svg)](https://github.com/jovanbulck/bare-sgx/actions/workflows/ci.yaml) [![License](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="doc/bare-sgx-logo-white.svg">
@@ -14,32 +14,30 @@ By interacting directly with the SGX driver in the Linux kernel, `bare-sgx` remo
 
 ## :question: Use Cases
 
-`bare-sgx` aims to enable innovative SGX enclave research, both offensive and defensive, and in improving the long-term reproducibility of research artifacts.
+`bare-sgx` aims to enable innovative SGX enclave research, both offensive and defensive, and to improve the long-term reproducibility of research artifacts.
 
 Example use cases include:
 
 - **Developing minimal-trust enclaves** with complete control over the trusted computing base, e.g., to support formal verification efforts.
 - **Packaging research artifacts or proof-of-concepts** without fragile and bloated SDK dependencies, relying solely on the stable Linux kernel interface to ensure long-term reproducibility and portability.
 - **Rapid prototyping and experimentation** with new attacks, defenses, and kernel extensions.
+- Minimal, self-contained **enclave test framework** for CI/CD integration (e.g., as used in the [Pandora-SGX](https://github.com/pandora-tee/pandora-examples) symbolic execution tool).
 
 ## :sparkles: Features
 
 ### Untrusted runtime
 
 - Minimal pure-C **[untrusted runtime](urts/)** for building, signing, and loading minimal enclave images (packaged in a custom ELF format). The only dependencies are OpenSSL and the upstream `/dev/sgx_enclave` kernel driver.
-
 - **[SGX-Step](https://github.com/jovanbulck/sgx-step) integration** for rapid attack prototyping, including single-stepping and controlled-channel attacks.
-
 - **[Buildroot](buildroot)** integration for packaging `bare-sgx` enclaves in minimal, self-contained VM images with virtualized SGX support.
+- [**CI/CD**](https://github.com/jovanbulck/bare-sgx/actions/) pipeline for automated building and testing.
 
 ### Trusted runtime
 
 - Minimal and **fully customizable enclave skeletons** in pure [assembly](app/ecall_asm/enclave) with optional bootstrapping to [C code](app/ecall_ptr/enclave).
-
 - (Optional) **[`bare-trts`](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/trts/bare-trts) trusted runtime** (to be upstreamed), featuring:
     - Auto-generated secure bridge code for interfaces defined in Enclave Definition Language (EDL) via Intel's unmodified `edger8r` tool.
     - Minimal embedded `malloc` implementation from FreeRTOS.
-
 - [HACL* integration](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/app/bare-crypto-app/enclave) for formally verified **cryptographic primitives** (to be upstreamed)
 
 ## :checkered_flag: Wishlist / Roadmap
