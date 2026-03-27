@@ -4,15 +4,20 @@ CFLAGS          := -Wall -Werror -g -fPIC
 AR              := ar
 ARFLAGS         := -rcs
 
-SOURCES         = $(shell ls *.c)
+# Exclude elf2sgxs.c from the library objects
+SOURCES         = $(filter-out elf2sgxs.c, $(shell ls *.c))
 ASM             = $(shell ls *.S)
 OBJECTS         = $(SOURCES:.c=.o) $(ASM:.S=.o)
 OUTPUT          = libbaresgx-urts.a
+TOOLS           = elf2sgxs
 
-all: $(OUTPUT)
+all: $(OUTPUT) $(TOOLS)
 
 $(OUTPUT): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(OUTPUT) $(OBJECTS)
+
+elf2sgxs: elf2sgxs.o
+	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@
 
 %.o : %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDE) -c $< -o $@
@@ -21,4 +26,4 @@ $(OUTPUT): $(OBJECTS)
 	$(AS) $(ASFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(OUTPUT)
+	rm -f $(OBJECTS) elf2sgxs.o $(OUTPUT) $(TOOLS)

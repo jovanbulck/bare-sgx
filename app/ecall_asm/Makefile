@@ -1,7 +1,7 @@
 BARESGX         = ../../urts/
 ENCLAVE         = enclave
 
-SUBDIRS         = $(ENCLAVE) $(BARESGX)
+SUBDIRS         = $(BARESGX) $(ENCLAVE)
 
 CC              := gcc
 LD              := gcc

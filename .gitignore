@@ -2,4 +2,8 @@
 *.elf
 *.swp
 *.a
-app
+*.sgxs
+*.pem
+*.sigstruct
+*.dump
+*.json
