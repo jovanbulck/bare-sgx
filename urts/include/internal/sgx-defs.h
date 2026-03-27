@@ -9,6 +9,9 @@
 #pragma pack(1)
 #define BIT(nr)			(1UL << (nr))
 
+#define PAGE_SIZE               4096
+#define PAGE_MASK               (~(PAGE_SIZE - 1))
+
 /* https://elixir.bootlin.com/linux/latest/source/arch/x86/include/asm/sgx.h#L291 */
 /**
  * struct sgx_secs - SGX Enclave Control Structure (SECS)
