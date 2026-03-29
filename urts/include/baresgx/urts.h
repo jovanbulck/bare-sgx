@@ -6,21 +6,31 @@
 #include <stdbool.h>
 #include <asm/sgx.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #define BARESGX_DEBUG           0
 
-#define BARESGX_ASSERT(cond)                                            \
-    do {                                                                \
-        if (!(cond))                                                    \
-        {                                                               \
-            perror("[" __FILE__ "] assertion '" #cond "' failed");      \
-            abort();                                                    \
-        }                                                               \
+#define BARESGX_ASSERT(cond)                                             \
+    do {                                                                 \
+        if (!(cond))                                                     \
+        {                                                                \
+            if (errno != 0)                                              \
+                perror("[" __FILE__ "] assertion '" #cond "' failed");   \
+            else                                                         \
+                printf("[" __FILE__ "] assertion '" #cond "' failed\n"); \
+            exit(1);                                                     \
+        }                                                                \
     } while(0)
 
 #define baresgx_info(msg, ...)                                          \
     do {                                                                \
         printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);              \
+        fflush(stdout);                                                 \
+    } while(0)
+
+#define baresgx_error(msg, ...)                                         \
+    do {                                                                \
+        printf("[" __FILE__ "] error: " msg "\n", ##__VA_ARGS__);       \
         fflush(stdout);                                                 \
     } while(0)
 
@@ -35,12 +45,11 @@
 #endif
 
 /*
- * Load the enclave provided @param(path) in Linux's custom selftest ELF
- * enclave format.
+ * Load the enclave provided @param(path) in canonical SGXS enclave format.
  *
  * @return      load address of the first TCS in the enclave
  */
-void* baresgx_load_elf_enclave(const char* path, int debug);
+void* baresgx_load_sgxs_enclave(const char* sgxs_path, const char *sigstruct_path, int debug);
 
 uint64_t baresgx_enter_enclave(void* tcs, uint64_t arg1);
 

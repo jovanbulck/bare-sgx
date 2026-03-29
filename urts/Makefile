@@ -1,6 +1,6 @@
 CC              := gcc
 INCLUDE         := -Iinclude/
-CFLAGS          := -Wall -Werror -g -fPIC
+CFLAGS          := -Wall  -g -fPIC
 AR              := ar
 ARFLAGS         := -rcs
 

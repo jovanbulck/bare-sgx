@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include "baresgx/urts.h"
 
-#define ENCLAVE_PATH    "enclave/encl.elf"
-#define ENCLAVE_DEBUG   0
+#define ENCLAVE_SGXS      "enclave/encl.sgxs"
+#define ENCLAVE_SIG       "enclave/encl.sig"
+#define ENCLAVE_DEBUG     0
 
 void wait_keypress(void)
 {
@@ -14,8 +15,8 @@ void wait_keypress(void)
 int main(void)
 {
     uint64_t rv;
-    void *tcs = baresgx_load_elf_enclave(ENCLAVE_PATH, ENCLAVE_DEBUG);
-    baresgx_info("loaded enclave at %p", tcs);
+    void *tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG);
+    baresgx_info("loaded enclave TCS at %p", tcs);
     //wait_keypress();
 
     baresgx_info("reading enclave memory..");
