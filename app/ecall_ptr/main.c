@@ -2,7 +2,8 @@
 #include "baresgx/urts.h"
 #include "enclave/test_encl.h"
 
-#define ENCLAVE_PATH    "enclave/encl.elf"
+#define ENCLAVE_SGXS    "enclave/encl.sgxs"
+#define ENCLAVE_SIG     "enclave/encl.sig"
 #define ENCLAVE_DEBUG   0
 
 int main(void)
@@ -11,7 +12,7 @@ int main(void)
     uint64_t rv = -1;
     void *tcs;
 
-    tcs = baresgx_load_elf_enclave(ENCLAVE_PATH, ENCLAVE_DEBUG);
+    tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG);
     baresgx_info("loaded enclave at %p", tcs);
 
     baresgx_info("reading enclave memory..");

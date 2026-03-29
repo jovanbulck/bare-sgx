@@ -3,6 +3,7 @@
 *.swp
 *.a
 *.sgxs
+*.sig
 *.pem
 *.sigstruct
 *.dump

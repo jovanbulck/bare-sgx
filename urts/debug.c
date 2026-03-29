@@ -32,21 +32,6 @@ void print_sgx_flags(unsigned int flags) {
     }
 }
 
-void print_encl_segment(const struct encl_segment *segment) {
-    printf("        encl_segment {\n");
-    printf("            src: %p\n", segment->src);
-    printf("            offset: %lld\n", (long long)segment->offset);
-    printf("            size: %zu\n", segment->size);
-    printf("            prot: ");
-    print_sgx_prot(segment->prot);
-    printf("\n            flags: ");
-    print_sgx_prot(segment->flags);
-    printf("; page type=");
-    print_sgx_flags(segment->flags);
-    printf("\n            measure: %s\n", segment->measure ? "true" : "false");
-    printf("        }\n");
-}
-
 void print_sgx_secs(const struct sgx_secs *secs) {
     printf("    sgx_secs {\n");
     printf("        size: %llu\n", (unsigned long long)secs->size);
@@ -151,27 +136,3 @@ void print_sgx_sigstruct(const struct sgx_sigstruct *sigstruct) {
     printf("]\n");
     printf("}\n");
 }
-
-void pretty_print_encl(const struct encl *enclave) {
-    printf("encl {\n");
-    printf("    fd: %d\n", enclave->fd);
-    printf("    bin: %p\n", enclave->bin);
-    printf("    bin_size: %lld\n", (long long)enclave->bin_size);
-    printf("    src: %p\n", enclave->src);
-    printf("    src_size: %zu\n", enclave->src_size);
-    printf("    encl_size: %zu\n", enclave->encl_size);
-    printf("    encl_base: %llx\n", (long long)enclave->encl_base);
-    printf("    nr_segments: %u\n", enclave->nr_segments);
-    printf("    segment_tbl: [\n");
-
-    // Loop through each segment in the segment table
-    for (unsigned int i = 0; i < enclave->nr_segments; i++) {
-        print_encl_segment(&enclave->segment_tbl[i]);
-    }
-
-    printf("    ]\n");
-    print_sgx_secs(&enclave->secs);
-    //print_sgx_sigstruct(&enclave->sigstruct);
-    printf("}\n");
-}
-
