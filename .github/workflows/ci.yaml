@@ -33,7 +33,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -yqq install build-essential libssl-dev
+          sudo apt-get -yqq install build-essential libssl-dev protobuf-compiler cargo
+          cargo install sgxs-tools
 
       - name: Build ${{ matrix.example }}
         run: cd ${{ matrix.example}} && make
