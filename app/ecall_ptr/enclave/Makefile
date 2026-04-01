@@ -7,6 +7,8 @@ LDFLAGS := -Wl,-T,test_encl.lds,--build-id=none
 PRIVATE_KEY = private.pem
 PUBLIC_KEY = public.pem
 
+SGXS_TOOLS = ../../../bin/
+
 all: encl.sgxs encl.sig
 
 encl.elf: test_encl_bootstrap.S test_encl.c
@@ -14,11 +16,11 @@ encl.elf: test_encl_bootstrap.S test_encl.c
 
 %.sgxs: %.elf
 	../../../urts/elf2sgxs $^ $@
-	sgxs-info summary $@ || true
+	$(SGXS_TOOLS)sgxs-info summary $@ || true
 	sha256sum $@ || true
 
 %.sig: %.sgxs $(PRIVATE_KEY) 
-	sgxs-sign -d $< $@ --key $(PRIVATE_KEY)
+	$(SGXS_TOOLS)sgxs-sign -d --attributes 0x404/0x402 $< $@ --key $(PRIVATE_KEY)
 	
 $(PRIVATE_KEY):
 	openssl genrsa -3 3072 > $(PRIVATE_KEY)

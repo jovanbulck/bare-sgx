@@ -49,7 +49,7 @@
  *
  * @return      load address of the first TCS in the enclave
  */
-void* baresgx_load_sgxs_enclave(const char* sgxs_path, const char *sigstruct_path, int debug);
+void* baresgx_load_sgxs_enclave(const char* sgxs_path, const char *sigstruct_path, int debug, int aexnotify);
 
 uint64_t baresgx_enter_enclave(void* tcs, uint64_t arg1);
 

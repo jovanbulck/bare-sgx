@@ -66,6 +66,17 @@ struct sgx_secinfo {
 };
 
 /**
+ * enum sgx_tcs_flags - execution flags for TCS
+ * @SGX_TCS_DBGOPTIN:	If enabled allows single-stepping and breakpoints
+ *			inside an enclave. It is cleared by EADD but can
+ *			be set later with EDBGWR.
+ */
+enum sgx_tcs_flags {
+	SGX_TCS_DBGOPTIN	= 0x01,
+	SGX_TCS_AEXNOTIFY	= 0x02,
+};
+
+/**
  * struct sgx_tcs - Thread Control Structure (TCS)
  * @state:		used to mark an entered TCS
  * @flags:		execution flags (cleared by EADD)

@@ -12,7 +12,7 @@ int main(void)
     uint64_t rv = -1;
     void *tcs;
 
-    tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG);
+    tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG, /*aexnotify=*/0);
     baresgx_info("loaded enclave at %p", tcs);
 
     baresgx_info("reading enclave memory..");

@@ -9,7 +9,7 @@
 #include "internal/sgxs.h"
 #include "baresgx/urts.h"
 
-int g_elf_fd = 0, g_sgxs_fd = 0;
+int g_elf_fd = 0, g_sgxs_fd = 0, g_aexnotify = 0;
 size_t g_sgxs_offset = 0, g_sgxs_elf_offset = 0;
 static unsigned int g_ssa_frame_size = 1, g_nssa = 1;
 static const char *g_entry_symbol = "encl_entry";
@@ -126,6 +126,9 @@ static int parse_args(int argc, char *argv[])
             g_entry_symbol = argv[i] + 8;
             BARESGX_ASSERT(*g_entry_symbol);
         }
+        else if (strncmp(argv[i], "--aexnotify", 11) == 0) {
+            g_aexnotify = 1;
+        }
         else if (argv[i][0] == '-') {
             fprintf(stderr, "Error: unknown option '%s'\n", argv[i]);
             return -1;
@@ -169,7 +172,7 @@ int main(int argc, char *argv[])
     uint64_t flags;
     
     if (parse_args(argc, argv) < 0) {
-        fprintf(stderr, "Usage: %s [--ssaframesize=N] [--nssa=N] [--entry=symbol_name] <input_elf> <output_sgxs>\n", argv[0]);
+        fprintf(stderr, "Usage: %s [--ssaframesize=N] [--nssa=N] [--entry=symbol_name] [--aexnotify] <input_elf> <output_sgxs>\n", argv[0]);
         return -1;
     }
 
@@ -224,6 +227,8 @@ int main(int argc, char *argv[])
     tcs.nr_ssa_frames = g_nssa;
     tcs.fs_limit = 0xFFFFFFFF;
     tcs.gs_limit = 0xFFFFFFFF;
+    if (g_aexnotify)
+        tcs.flags |= SGX_TCS_AEXNOTIFY;
 
     sgxs_add_page(&tcs, SGX_SECINFO_TCS, /*measure=*/1);
     for (i = 0; i < g_nssa; i++)

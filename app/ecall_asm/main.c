@@ -15,7 +15,7 @@ void wait_keypress(void)
 int main(void)
 {
     uint64_t rv;
-    void *tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG);
+    void *tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG, /*aexnotify=*/0);
     baresgx_info("loaded enclave TCS at %p", tcs);
     //wait_keypress();
 
