@@ -50,7 +50,7 @@ static int ioc_ecreate(int debug, uint8_t *sgxs, int sgxs_offset)
 	struct sgxs_ecreate *ecreate;
 	struct sgx_secs secs = {0};
 
-	ASSERT_SGXS_CANONICAL(!g_ecreated, "only one ECREATE");
+	ASSERT_SGXS_CANONICAL(!g_ecreated, "previous ECREATE not followed by EINIT");
 	ecreate = (struct sgxs_ecreate *)(sgxs + sgxs_offset);
 	g_encl_base = map_enclave_area(ecreate->size);
 	baresgx_debug("ECREATE    : size=%#lx; ssaframesize=%u; base=%#lx",
@@ -145,6 +145,8 @@ static void ioc_einit(struct sgx_sigstruct *sigstruct)
 
 	ioc_einit.sigstruct = (uint64_t) sigstruct;
 	BARESGX_ASSERT(ioctl(g_fd_dev, SGX_IOC_ENCLAVE_INIT, &ioc_einit) >= 0);
+	
+	g_ecreated = 0;
 }
 
 void* baresgx_load_sgxs_enclave(const char *sgxs_path, const char * sigstruct_path, int debug)
