@@ -25,15 +25,16 @@ Example use cases include:
 
 ## :sparkles: Features
 
-### Untrusted runtime
+### Untrusted Runtime
 
-- Minimal pure-C **[untrusted runtime](urts/)** for building, signing, and loading minimal enclave images (packaged in a custom ELF format). The only dependencies are OpenSSL and the upstream `/dev/sgx_enclave` kernel driver.
+- Minimal pure-C **[untrusted runtime](urts/)** for loading minimal enclave images (packaged in the standardized [SGXS format](https://github.com/fortanix/rust-sgx/tree/master/intel-sgx/sgxs-tools)). The only dependency is the upstream `/dev/sgx_enclave` Linux kernel driver.
 - **[SGX-Step](https://github.com/jovanbulck/sgx-step) integration** for rapid attack prototyping, including single-stepping and controlled-channel attacks.
 - **[Buildroot](buildroot)** integration for packaging `bare-sgx` enclaves in minimal, self-contained VM images with virtualized SGX support.
 - [**CI/CD**](https://github.com/jovanbulck/bare-sgx/actions/) pipeline for automated building and testing.
 
-### Trusted runtime
+### Mini SDK and Trusted Runtime
 
+- Minimal **[SDK tools](sdk/)** for building and signing bare-metal enclave images in pure C or assembly. The only dependencies are OpenSSL and standard build tools (make, gcc).
 - Minimal and **fully customizable enclave skeletons** in pure [assembly](app/ecall_asm/enclave) with optional bootstrapping to [C code](app/ecall_ptr/enclave).
 - Optional **[`bare-trts`](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/trts/bare-trts) trusted runtime** (to be upstreamed), featuring:
     - Auto-generated secure bridge code for interfaces defined in Enclave Definition Language (EDL) via Intel's unmodified `edger8r` tool.
@@ -42,7 +43,7 @@ Example use cases include:
 
 ## :checkered_flag: Wishlist / Roadmap
 
-- More and improved example enclaves.
-- Support [SGXS format](https://github.com/fortanix/rust-sgx/tree/master/intel-sgx/sgxs-tools) for building and loading enclaves, replacing the custom ELF format currently used by the URTS loader. (Note: SGXS files can currently be extracted using [sgx-tracer](https://github.com/pandora-tee/sgx-tracer).)
-- Exception handling and AEX-Notify support (work in progress).
-- Formal verification.
+- [x] ~Support [SGXS format](https://github.com/fortanix/rust-sgx/tree/master/intel-sgx/sgxs-tools) for building and loading enclaves, replacing the custom ELF format currently used by the URTS loader.~
+- [ ] More and improved example enclaves.
+- [ ] Exception handling and AEX-Notify support (work in progress).
+- [ ] Formal verification.
