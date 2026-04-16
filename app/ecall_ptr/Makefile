@@ -1,13 +1,13 @@
-BARESGX         = ../../urts/
+BARESGX         = ../..
 ENCLAVE         = enclave
 
-SUBDIRS         = $(BARESGX) $(ENCLAVE)
+SUBDIRS         = $(BARESGX)/urts $(BARESGX)/sdk/tools $(ENCLAVE)
 
 CC              := gcc
 LD              := gcc
-INCLUDE         := -I$(BARESGX)/include/
+INCLUDE         := -I$(BARESGX)/urts/include/
 CFLAGS          := -Wall -Werror -g -fPIC $(CFLAGS)
-LDFLAGS         := -z noexecstack -lbaresgx-urts -L$(BARESGX) -lcrypto 
+LDFLAGS         := -z noexecstack -lbaresgx-urts -L$(BARESGX)/urts
 
 SOURCES         = $(shell ls *.c)
 OBJECTS         = $(SOURCES:.c=.o)

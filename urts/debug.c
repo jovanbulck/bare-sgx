@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "baresgx/urts.h"
-#include "internal/elf-enclave.h"
+#include "internal/sgx-defs.h"
 
 void dump_hex(uint8_t *buf, int len)
 {

@@ -114,41 +114,31 @@ static int parse_args(int argc, char *argv[])
     int positional = 0;
 
     for (int i = 1; i < argc; i++) {
-        if (strncmp(argv[i], "--ssaframesize=", 15) == 0) {
-            g_ssa_frame_size = atoi(argv[i] + 15);
-            BARESGX_ASSERT(g_ssa_frame_size > 0);
-        }
-        else if (strncmp(argv[i], "--nssa=", 7) == 0) {
-            g_nssa = atoi(argv[i] + 7);
-            BARESGX_ASSERT(g_nssa > 0);
-        }
-        else if (strncmp(argv[i], "--entry=", 8) == 0) {
-            g_entry_symbol = argv[i] + 8;
-            BARESGX_ASSERT(*g_entry_symbol);
-        }
-        else if (argv[i][0] == '-') {
-            fprintf(stderr, "Error: unknown option '%s'\n", argv[i]);
-            return -1;
-        }
-        else {
+        if (!strcmp(argv[i], "--ssaframesize")) {
+            BARESGX_ASSERT_RET((i+1) < argc, "ssaframesize");
+            g_ssa_frame_size = atoi(argv[++i]);
+            BARESGX_ASSERT_RET(g_ssa_frame_size > 0, "ssaframesize");
+        } else if (!strcmp(argv[i], "--nssa")) {
+            BARESGX_ASSERT_RET((i+1) < argc, "nssa");
+            g_nssa = atoi(argv[++i]);
+            BARESGX_ASSERT_RET(g_nssa > 0, "nssa");
+        } else if (!strcmp(argv[i], "--entry")) {
+            BARESGX_ASSERT_RET((i+1) < argc, "entry");
+            g_entry_symbol = argv[++i];
+        } else if (argv[i][0] == '-') {
+            BARESGX_ASSERT_RET(0, argv[i]);
+        } else {
             switch (positional++) {
                 case 0:
                     g_elf_fd = open(argv[i], O_RDONLY);
-                    if (g_elf_fd < 0) {
-                        fprintf(stderr, "Error: cannot open input file '%s'\n", argv[i]);
-                        return -1;
-                    }
+                    BARESGX_ASSERT_RET(g_elf_fd > 0, argv[i]);
                     break;
                 case 1:
                     g_sgxs_fd = open(argv[i], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-                    if (g_sgxs_fd < 0) {
-                        fprintf(stderr, "Error: cannot open output file '%s'\n", argv[i]);
-                        return -1;
-                    }
+                    BARESGX_ASSERT_RET(g_sgxs_fd > 0, argv[i]);
                     break;
                 default:
-                    fprintf(stderr, "Error: unexpected positional argument '%s'\n", argv[i]);
-                    return -1;
+                    BARESGX_ASSERT_RET(0, argv[i]);
             }
         }
     }
@@ -202,11 +192,9 @@ int main(int argc, char *argv[])
         data  = elf + phdrs[i].p_offset;
         measure = strcmp(name, ".noinit") == 0 ? 0 : 1;
 
-        printf("[elf2sgxs] adding section '%-5.5s': addr=0x%04lx size=0x%04lx flags=%s%s%s\n",
+        baresgx_info("adding section '%-5.5s': addr=0x%04lx size=0x%04lx flags=%s",
                name, phdrs[i].p_vaddr, phdrs[i].p_memsz,
-               flags & SGX_SECINFO_R   ? "r" : "-",
-               flags & SGX_SECINFO_W   ? "w" : "-",
-               flags & SGX_SECINFO_X   ? "x" : "-");
+               sgx_secinfo_flags_to_str(flags));
 
         for (offset = 0; offset < phdrs[i].p_memsz; offset += PAGE_SIZE) {
             memset(pagebuf, 0x00, PAGE_SIZE);

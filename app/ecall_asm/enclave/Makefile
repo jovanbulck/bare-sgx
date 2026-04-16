@@ -1,25 +1,28 @@
-.PHONY: all clean
+BARESGX         = ../../..
+TOOLS           = $(BARESGX)/sdk/tools
 
-CFLAGS  += -Wall -Werror -static-pie -nostdlib -ffreestanding -fPIE \
-               -fno-stack-protector -mrdrnd $(INCLUDES)
-LDFLAGS := -Wl,-T,encl.lds,--build-id=none
+PRIVATE_KEY     = private.pem
+PUBLIC_KEY      = public.pem
 
-PRIVATE_KEY = private.pem
-PUBLIC_KEY = public.pem
+SOURCES         = $(shell ls *.c *.S)
+
+CFLAGS         += -Wall -Werror -static-pie -nostdlib -ffreestanding -fPIE \
+        		       -fno-stack-protector -mrdrnd $(INCLUDES)
+LDFLAGS        := -Wl,-T,encl.lds,--build-id=none
 
 all: encl.sgxs encl.sig
 
-encl.elf: encl.S
+encl.elf: $(SOURCES)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 %.sgxs: %.elf
-	../../../urts/elf2sgxs $^ $@
+	$(TOOLS)/elf2sgxs $^ $@
 	sgxs-info summary $@ || true
 	sha256sum $@ || true
 
 %.sig: %.sgxs $(PRIVATE_KEY) 
-	sgxs-sign -d $< $@ --key $(PRIVATE_KEY)
-	
+	$(TOOLS)/sgxs-sign $< $(PRIVATE_KEY) $@
+
 $(PRIVATE_KEY):
 	openssl genrsa -3 3072 > $(PRIVATE_KEY)
 	openssl rsa -in $(PRIVATE_KEY) -pubout -out $(PUBLIC_KEY) 
