@@ -54,7 +54,7 @@ static int ioc_ecreate(int debug, uint8_t *sgxs, int sgxs_offset)
 	ecreate = (struct sgxs_ecreate *)(sgxs + sgxs_offset);
 	g_encl_base = map_enclave_area(ecreate->size);
 	baresgx_debug("ECREATE    : size=%#lx; ssaframesize=%u; base=%#lx",
-		ecreate->size, ecreate->ssaframesize, g_encl_base);
+			ecreate->size, ecreate->ssaframesize, g_encl_base);
 	
 	secs.ssa_frame_size = ecreate->ssaframesize;
 	secs.attributes = SGX_ATTR_MODE64BIT;
@@ -82,7 +82,8 @@ static int ioc_eadd(uint8_t *sgxs, int sgxs_offset)
 	struct sgxs_eadd *eadd;
 
 	eadd = (struct sgxs_eadd *)(sgxs + sgxs_offset);
-	baresgx_debug("EADD       : offset=%#lx; flags=%#lx", eadd->offset, eadd->flags);
+	baresgx_debug("EADD       : offset=%#lx; flags=%s",
+		eadd->offset, sgx_secinfo_flags_to_str(eadd->flags));
 
 	ASSERT_SGXS_CANONICAL(g_ecreated, "must start with ECREATE");
 	ASSERT_SGXS_CANONICAL(!(eadd->offset & (PAGE_SIZE-1)), "EADD must be page-aligned");
@@ -142,6 +143,14 @@ static int ioc_eadd(uint8_t *sgxs, int sgxs_offset)
 static void ioc_einit(struct sgx_sigstruct *sigstruct)
 {
 	struct sgx_enclave_init ioc_einit = {0};
+
+	ASSERT_SGXS_CANONICAL(g_ecreated, "must start with ECREATE");
+	baresgx_debug("EINIT      : date=%#x; attr=%s; misc=%s",
+			sigstruct->header.date,
+			sgx_attribute_to_str(sigstruct->body.attributes),
+			sgx_miscselect_to_str(sigstruct->body.miscselect));
+	baresgx_debug("EINIT      : mrenclave=%s",
+			hex_str(sigstruct->body.mrenclave, sizeof(sigstruct->body.mrenclave)));
 
 	ioc_einit.sigstruct = (uint64_t) sigstruct;
 	BARESGX_ASSERT(ioctl(g_fd_dev, SGX_IOC_ENCLAVE_INIT, &ioc_einit) >= 0);

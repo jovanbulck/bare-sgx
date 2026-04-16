@@ -1,16 +1,13 @@
 #ifndef SGX_DEFS_H_INC
 #define SGX_DEFS_H_INC
+#include "../baresgx/util.h"
 
 /*
  * Architectural definitions of SGX structures, as defined in Intel SDM and
- * copied from Linux kernel.
+ * largely copied from Linux kernel.
  */
 
 #pragma pack(1)
-#define BIT(nr)			(1UL << (nr))
-
-#define PAGE_SIZE               4096
-#define PAGE_MASK               (~(PAGE_SIZE - 1))
 
 /* https://elixir.bootlin.com/linux/latest/source/arch/x86/include/asm/sgx.h#L291 */
 /**
@@ -205,16 +202,17 @@ enum sgx_page_type {
  * %SGX_SECINFO_VA:	a VA page
  * %SGX_SECINFO_TRIM:	a page in trimmed state
  */
-enum sgx_secinfo_flags {
-	SGX_SECINFO_R			= BIT(0),
-	SGX_SECINFO_W			= BIT(1),
-	SGX_SECINFO_X			= BIT(2),
-	SGX_SECINFO_SECS		= (SGX_PAGE_TYPE_SECS << 8),
-	SGX_SECINFO_TCS			= (SGX_PAGE_TYPE_TCS << 8),
-	SGX_SECINFO_REG			= (SGX_PAGE_TYPE_REG << 8),
-	SGX_SECINFO_VA			= (SGX_PAGE_TYPE_VA << 8),
-	SGX_SECINFO_TRIM		= (SGX_PAGE_TYPE_TRIM << 8),
-};
+#define SGX_SECINFO_LIST(X) 						\
+    X(SGX_SECINFO_R,     (BIT(0))) 				    \
+    X(SGX_SECINFO_W,     (BIT(1))) 				    \
+    X(SGX_SECINFO_X,     (BIT(2))) 				    \
+    X(SGX_SECINFO_SECS,  (SGX_PAGE_TYPE_SECS << 8)) \
+    X(SGX_SECINFO_TCS,   (SGX_PAGE_TYPE_TCS  << 8)) \
+    X(SGX_SECINFO_REG,   (SGX_PAGE_TYPE_REG  << 8)) \
+    X(SGX_SECINFO_VA,    (SGX_PAGE_TYPE_VA   << 8)) \
+    X(SGX_SECINFO_TRIM,  (SGX_PAGE_TYPE_TRIM << 8))
+
+MK_ENUM(sgx_secinfo_flags, SGX_SECINFO_LIST)
 
 /**
  * enum sgx_attributes - the attributes field in &struct sgx_secs
@@ -230,18 +228,32 @@ enum sgx_secinfo_flags {
  * %SGX_ATTR_ASYNC_EXIT_NOTIFY:	Allow enclaves to be notified after an
  *				asynchronous exit has occurred.
  */
-enum sgx_attribute {
-	SGX_ATTR_INIT		   = BIT(0),
-	SGX_ATTR_DEBUG		   = BIT(1),
-	SGX_ATTR_MODE64BIT	   = BIT(2),
-				  /* BIT(3) is reserved */
-	SGX_ATTR_PROVISIONKEY	   = BIT(4),
-	SGX_ATTR_EINITTOKENKEY	   = BIT(5),
-				  /* BIT(6) is for CET */
-	SGX_ATTR_KSS		   = BIT(7),
-				  /* BIT(8) is reserved */
-				  /* BIT(9) is reserved */
-	SGX_ATTR_ASYNC_EXIT_NOTIFY = BIT(10),
-};
+#define SGX_ATTR_LIST(X) 				    \
+    X(SGX_ATTR_INIT,               BIT(0))	\
+    X(SGX_ATTR_DEBUG,              BIT(1))	\
+    X(SGX_ATTR_MODE64BIT,          BIT(2))	\
+    /* BIT(3) reserved */               	\
+    X(SGX_ATTR_PROVISIONKEY,       BIT(4))	\
+    X(SGX_ATTR_EINITTOKENKEY,      BIT(5))	\
+	X(SGX_ATTR_CET,                BIT(6))	\
+    X(SGX_ATTR_KSS,                BIT(7))  \
+    /* BIT(8), BIT(9) reserved */   		\
+    X(SGX_ATTR_ASYNC_EXIT_NOTIFY,  BIT(10))
+
+MK_ENUM(sgx_attribute, SGX_ATTR_LIST);
+
+/**
+ * enum sgx_miscselect - additional information to an SSA frame
+ * %SGX_MISC_EXINFO:	Report #PF or #GP to the SSA frame.
+ *
+ * Save State Area (SSA) is a stack inside the enclave used to store processor
+ * state when an exception or interrupt occurs. This enum defines additional
+ * information stored to an SSA frame.
+ */
+#define SGX_MISC_LIST(X) 				    \
+    X(SGX_MISC_EXINFO,             BIT(0))	\
+    X(SGX_MISC_CPINFO,             BIT(1))
+
+MK_ENUM(sgx_miscselect, SGX_MISC_LIST);
 
 #endif

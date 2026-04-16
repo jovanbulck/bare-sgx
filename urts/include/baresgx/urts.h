@@ -1,48 +1,8 @@
 #ifndef BARE_SGX_URTS_H_INC
 #define BARE_SGX_URTS_H_INC
-
 #include <stdint.h>
-#include <unistd.h>
-#include <stdbool.h>
 #include <asm/sgx.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#define BARESGX_DEBUG           0
-
-#define BARESGX_ASSERT(cond)                                             \
-    do {                                                                 \
-        if (!(cond))                                                     \
-        {                                                                \
-            if (errno != 0)                                              \
-                perror("[" __FILE__ "] assertion '" #cond "' failed");   \
-            else                                                         \
-                printf("[" __FILE__ "] assertion '" #cond "' failed\n"); \
-            exit(1);                                                     \
-        }                                                                \
-    } while(0)
-
-#define baresgx_info(msg, ...)                                          \
-    do {                                                                \
-        printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);              \
-        fflush(stdout);                                                 \
-    } while(0)
-
-#define baresgx_error(msg, ...)                                         \
-    do {                                                                \
-        printf("[" __FILE__ "] error: " msg "\n", ##__VA_ARGS__);       \
-        fflush(stdout);                                                 \
-    } while(0)
-
-#if BARESGX_DEBUG
-    #define baresgx_debug(msg, ...)                                     \
-        do {                                                            \
-            printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);          \
-            fflush(stdout);                                             \
-        } while(0)
-#else
-    #define baresgx_debug(msg, ...)
-#endif
+#include "util.h"
 
 /*
  * Load the enclave provided @param(path) in canonical SGXS enclave format.

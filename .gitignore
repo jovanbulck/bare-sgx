@@ -8,3 +8,5 @@
 *.sigstruct
 *.dump
 *.json
+*.out
+bin/*
