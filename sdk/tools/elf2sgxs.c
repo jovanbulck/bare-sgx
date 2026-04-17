@@ -214,8 +214,9 @@ int main(int argc, char *argv[])
     tcs.gs_limit = 0xFFFFFFFF;
 
     sgxs_add_page(&tcs, SGX_SECINFO_TCS, /*measure=*/1);
+    memset(pagebuf, 0x00, PAGE_SIZE);
     for (i = 0; i < g_nssa; i++)
-        sgxs_add_page(NULL, SGX_SECINFO_R | SGX_SECINFO_W | SGX_SECINFO_REG, /*measure=*/0);
+        sgxs_add_page(pagebuf, SGX_SECINFO_R | SGX_SECINFO_W | SGX_SECINFO_REG, /*measure=*/1);
 
     return 0;
 }
