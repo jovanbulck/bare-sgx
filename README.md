@@ -34,16 +34,19 @@ Example use cases include:
 
 ### Mini SDK and Trusted Runtime
 
-- Minimal **[SDK tools](sdk/)** for building and signing bare-metal enclave images in pure C or assembly. The only dependencies are OpenSSL and standard build tools (make, gcc).
+- Minimal **SDK tools** for [building](sdk/tools/elf2sgxs.c) and [signing](sdk/tools/sgxs-sign.c) bare-metal enclave images in pure C or assembly. The only dependencies are OpenSSL and standard build tools (make, gcc).
 - Minimal and **fully customizable enclave skeletons** in pure [assembly](app/ecall_asm/enclave) with optional bootstrapping to [C code](app/ecall_ptr/enclave).
-- Optional **[`bare-trts`](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/trts/bare-trts) trusted runtime** (to be upstreamed), featuring:
-    - Auto-generated secure bridge code for interfaces defined in Enclave Definition Language (EDL) via Intel's unmodified `edger8r` tool.
-    - Minimal embedded `malloc` (current implementation from FreeRTOS).
-- Optional [HACL* integration](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/app/bare-crypto-app/enclave) for formally verified **cryptographic primitives** (to be upstreamed)
+- Optional **[`bare-trts`](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/trts/bare-trts) trusted runtime**, featuring:
+    - Minimal ABI sanitization [entry stub](sdk/trts/entry.S)
+    - Minimal [C library](sdk/trts/trts.c) with secure pointer validation functions.
+    - (to be [upstreamed](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/trts/bare-trts)): Auto-generated secure bridge code for interfaces defined in Enclave Definition Language (EDL) via Intel's unmodified `edger8r` tool.
+    - (to be [upstreamed](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/trts/bare-trts)): Minimal embedded `malloc` (current implementation from FreeRTOS).
+- (to be [upstreamed](https://github.com/KobeSauwens/bare-sgx-thesis/tree/main/app/bare-crypto-app/enclave)): Optional HACL* integration for formally verified **cryptographic primitives**
 
 ## :checkered_flag: Wishlist / Roadmap
 
 - [x] ~Support [SGXS format](https://github.com/fortanix/rust-sgx/tree/master/intel-sgx/sgxs-tools) for building and loading enclaves, replacing the custom ELF format currently used by the URTS loader.~
+- [x] ~Minimal trusted runtime with ABI/API sanitization~
 - [ ] More and improved example enclaves.
 - [ ] Exception handling and AEX-Notify support (work in progress).
 - [ ] Formal verification.

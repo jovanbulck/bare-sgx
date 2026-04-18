@@ -1,15 +1,17 @@
-BARESGX          = ..
+
+BARESGX          = ../..
 
 CC              := gcc
 INCLUDE         := -I$(BARESGX)/include/
-CFLAGS          := -Wall -g -Os
+CFLAGS          += -Wall -Werror -static-pie -nostdlib -ffreestanding -fPIE \
+        		  -fno-stack-protector -mno-sse -mrdrnd $(INCLUDE) -Os
 AR              := ar
 ARFLAGS         := -rcs
 
 SOURCES         = $(shell ls *.c)
 ASM             = $(shell ls *.S)
 OBJECTS         = $(SOURCES:.c=.o) $(ASM:.S=.o)
-OUTPUT          = libbare-urts.a
+OUTPUT          = libbare-trts.a
 
 all: $(OUTPUT)
 

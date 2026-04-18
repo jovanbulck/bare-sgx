@@ -7,6 +7,7 @@
 enum encl_op_type {
 	ENCL_OP_ADD,
 	ENCL_OP_SUB,
+	ENCL_OP_INFO,
         ENCL_OP_MAX,
 };
 
@@ -19,6 +20,12 @@ struct encl_op_math {
         uint64_t val1;
         uint64_t val2;
         uint64_t *rv_pt;
+};
+
+struct encl_op_info {
+	struct encl_op_header header;
+        uint64_t *base_pt;
+        uint64_t *size_pt;
 };
 
 #endif

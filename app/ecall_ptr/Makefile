@@ -5,9 +5,9 @@ SUBDIRS         = $(BARESGX)/urts $(BARESGX)/sdk/tools $(ENCLAVE)
 
 CC              := gcc
 LD              := gcc
-INCLUDE         := -I$(BARESGX)/urts/include/
-CFLAGS          := -Wall -Werror -g -fPIC $(CFLAGS)
-LDFLAGS         := -z noexecstack -lbaresgx-urts -L$(BARESGX)/urts
+INCLUDE         := -I$(BARESGX)/include/
+CFLAGS          += -Wall -Werror -g -Os
+LDFLAGS         := -z noexecstack -lbare-urts -L$(BARESGX)/urts
 
 SOURCES         = $(shell ls *.c)
 OBJECTS         = $(SOURCES:.c=.o)

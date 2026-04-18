@@ -10,8 +10,9 @@
 #include "baresgx/urts.h"
 
 int g_elf_fd = 0, g_sgxs_fd = 0;
-size_t g_sgxs_offset = 0, g_sgxs_elf_offset = 0;
-static unsigned int g_ssa_frame_size = 1, g_nssa = 1;
+size_t g_sgxs_offset = 0;
+uint64_t g_enclave_size = 1;
+static unsigned int g_ssa_frame_size = 1, g_nssa = 1, g_ntcs = 1;
 static const char *g_entry_symbol = "encl_entry";
 
 #define ELF_MAGIC 0x464C457FU
@@ -24,15 +25,14 @@ static void sgxs_append(const void *buf, size_t size)
 static void sgxs_ecreate(size_t size)
 {
     struct sgxs_ecreate ecreate = {0};
-    uint64_t enclave_size = 1;
 
     /* align to nearest power of 2 (required by ECREATE) */
-    while (enclave_size < size * PAGE_SIZE)
-        enclave_size <<= 1;
+    while (g_enclave_size < size)
+        g_enclave_size <<= 1;
 
     ecreate.tag = SGXS_TAG_ECREATE;
     ecreate.ssaframesize = g_ssa_frame_size;
-    ecreate.size = enclave_size;
+    ecreate.size = g_enclave_size;
     sgxs_append(&ecreate, sizeof(ecreate));
 }
 
@@ -47,7 +47,8 @@ static void sgxs_add_page(const void* data, uint64_t secinfo_flags, int measure)
     struct sgxs_eadd eadd = {0x00};
     struct sgxs_eextend eextend = {0x00};
     int i;
-
+    
+    BARESGX_ASSERT(IS_PAGE_ALIGNED(g_sgxs_offset));
     eadd.tag = SGXS_TAG_EADD;
     eadd.offset = g_sgxs_offset;
     eadd.flags = secinfo_flags;
@@ -88,10 +89,10 @@ static uint64_t elf_symbol(const char *symname, uint8_t *elf)
 
         for (int j = 0; j < nsyms; j++)
             if (strcmp(strtab + syms[j].st_name, symname) == 0)
-                return g_sgxs_elf_offset + syms[j].st_value;
+                return syms[j].st_value;
     }
 
-    BARESGX_ASSERT(0 && "symbol not found");
+    return -1;
 }
 
 static const char *elf_addr2name(uint64_t addr, uint8_t *elf)
@@ -107,6 +108,17 @@ static const char *elf_addr2name(uint64_t addr, uint8_t *elf)
             if (*name) return name;
         }
     return "?";
+}
+
+static void patch_elf_symbol(uint8_t *elf, const char* sym, void *val, size_t sz)
+{
+    uint64_t preview = 0, offset = elf_symbol(sym, elf);
+    if (offset != -1) {
+        memcpy(elf+offset, val, sz);
+        memcpy(&preview, val, MIN(sz, 8));
+        baresgx_info("patched %s = %#lx (%lu-byte ELF symbol at offset %#lx)", sym, preview, sz, offset);
+    } else
+        baresgx_info("symbol '%s' not found in ELF file; skipping..", sym);
 }
 
 static int parse_args(int argc, char *argv[])
@@ -165,7 +177,8 @@ int main(int argc, char *argv[])
 
     /* mmap valid input ELF file */
     BARESGX_ASSERT(fstat(g_elf_fd, &sb) >= 0);
-    BARESGX_ASSERT((elf = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, g_elf_fd, 0)) != MAP_FAILED);
+    BARESGX_ASSERT((elf = mmap(NULL, sb.st_size, PROT_READ | PROT_WRITE,
+                               MAP_PRIVATE, g_elf_fd, 0)) != MAP_FAILED);
     BARESGX_ASSERT( (*((uint32_t*) elf) == ELF_MAGIC));
 
     /* parse input ELF file: extract program header */
@@ -178,9 +191,10 @@ int main(int argc, char *argv[])
             continue;;
         elf_pages += (phdrs[i].p_memsz + PAGE_SIZE - 1) & PAGE_MASK;
     }
-    sgxs_ecreate(elf_pages + g_nssa*PAGE_SIZE + /*tcs*/ 1*PAGE_SIZE + /*guard pages*/ 2*PAGE_SIZE);
-    sgxs_add_guard_page();
-    g_sgxs_elf_offset = g_sgxs_offset;
+    sgxs_ecreate(elf_pages + g_nssa*PAGE_SIZE + g_ntcs*PAGE_SIZE + /*guard pages*/ 3*PAGE_SIZE);
+
+    /* patch computed enclave size onto predefined ELF symbol name */
+    patch_elf_symbol(elf, "__enclave_size", &g_enclave_size, sizeof(g_enclave_size));
 
     /* write each loadable ELF segment into the output SGXS stream */
     for (i = 0; i < ehdr->e_phnum; i++) {
@@ -192,10 +206,11 @@ int main(int argc, char *argv[])
         data  = elf + phdrs[i].p_offset;
         measure = strcmp(name, ".noinit") == 0 ? 0 : 1;
 
-        baresgx_info("adding section '%-5.5s': addr=0x%04lx size=0x%04lx flags=%s",
+        baresgx_info("adding section '%-6.6s': addr=0x%04lx size=0x%04lx flags=%s",
                name, phdrs[i].p_vaddr, phdrs[i].p_memsz,
                sgx_secinfo_flags_to_str(flags));
 
+        g_sgxs_offset = phdrs[i].p_vaddr;
         for (offset = 0; offset < phdrs[i].p_memsz; offset += PAGE_SIZE) {
             memset(pagebuf, 0x00, PAGE_SIZE);
             if (offset < phdrs[i].p_filesz)

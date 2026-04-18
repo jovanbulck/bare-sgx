@@ -6,9 +6,17 @@
 #define ENCLAVE_SIG     "enclave/encl.sig"
 #define ENCLAVE_DEBUG   0
 
+extern uint64_t g_encl_base, g_encl_size;
+
 int main(void)
 {
+    uint64_t encl_base = 0, encl_size = 0;
     struct encl_op_math arg;
+    struct encl_op_info info = {
+        .header = {.type = ENCL_OP_INFO},
+        .base_pt = &encl_base,
+        .size_pt = &encl_size,
+    };
     uint64_t rv = -1;
     void *tcs;
 
@@ -19,6 +27,10 @@ int main(void)
     printf("\tL mem at %p is %lx\n", (void*) tcs, *((uint64_t*) tcs));
 
     baresgx_info("calling enclave TCS..");
+    baresgx_enter_enclave(tcs, (uint64_t) &info);
+    printf("\tL enclave returned base=%#lx; size=%#lx\n", encl_base, encl_size);
+    BARESGX_ASSERT(g_encl_base == encl_base);
+    BARESGX_ASSERT(g_encl_size == encl_size);
 
     arg.header.type = ENCL_OP_ADD;
     arg.val1 = 1300;

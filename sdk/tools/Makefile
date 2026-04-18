@@ -1,11 +1,13 @@
-CFLAGS 	= -I../../urts/include/
-SOURCES = $(shell ls *.c)
-TOOLS   = $(SOURCES:.c=)
+BARESGX          = ../..
+INCLUDE          = -I$(BARESGX)/include/
+CFLAGS 	        += -Os
+SOURCES          = $(shell ls *.c)
+TOOLS            = $(SOURCES:.c=)
 
 all: $(TOOLS)
 
 sgxs-sign: sgxs-sign.c
-	$(CC) $< $(CFLAGS) -lcrypto -o $@
+	$(CC) $< $(CFLAGS) $(INCLUDE) -lcrypto -o $@
 
 elf2sgxs: elf2sgxs.c
 	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@

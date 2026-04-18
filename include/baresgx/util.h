@@ -82,6 +82,7 @@ static inline char *hex_str(void *buf, size_t len)
 
 #define PAGE_SIZE               4096
 #define PAGE_MASK               (~(PAGE_SIZE - 1))
+#define IS_PAGE_ALIGNED(p)      (((uintptr_t)(p) & (PAGE_SIZE - 1)) == 0)
 
 #define X_MAKE_ENUM(name, bit) 	name = bit,
 #define X_MAKE_MASK(name, bit)  bit |

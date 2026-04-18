@@ -1,3 +1,5 @@
+# Bare-metal C enclave with minimal trusted runtime
+
 Sample output:
 
 ```

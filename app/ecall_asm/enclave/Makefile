@@ -1,19 +1,21 @@
 BARESGX         = ../../..
 TOOLS           = $(BARESGX)/sdk/tools
+TRTS            = $(BARESGX)/sdk/trts
 
 PRIVATE_KEY     = private.pem
 PUBLIC_KEY      = public.pem
 
 SOURCES         = $(shell ls *.c *.S)
 
+INCLUDE         = -I$(BARESGX)/include/
 CFLAGS         += -Wall -Werror -static-pie -nostdlib -ffreestanding -fPIE \
-        		       -fno-stack-protector -mrdrnd $(INCLUDES)
-LDFLAGS        := -Wl,-T,encl.lds,--build-id=none
+        		  -fno-stack-protector -mno-sse -mrdrnd $(INCLUDE)
+LDFLAGS        := -T $(TRTS)/enclave.lds -Wl,--build-id=none -z noexecstack
 
 all: encl.sgxs encl.sig
 
 encl.elf: $(SOURCES)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@ $(LDFLAGS)
 
 %.sgxs: %.elf
 	$(TOOLS)/elf2sgxs $^ $@

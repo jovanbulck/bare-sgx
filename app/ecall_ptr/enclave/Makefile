@@ -1,19 +1,27 @@
 BARESGX         = ../../..
 TOOLS           = $(BARESGX)/sdk/tools
+TRTS            = $(BARESGX)/sdk/trts
+
+SUBDIRS         = $(TRTS)
 
 PRIVATE_KEY     = private.pem
 PUBLIC_KEY      = public.pem
 
-SOURCES         = $(shell ls *.c *.S)
+SOURCES         = $(shell ls *.c)
 
+INCLUDE         = -I$(BARESGX)/include/
 CFLAGS         += -Wall -Werror -static-pie -nostdlib -ffreestanding -fPIE \
-        		       -fno-stack-protector -mrdrnd $(INCLUDES)
-LDFLAGS        := -Wl,-T,encl.lds,--build-id=none
+        		       -fno-stack-protector -mno-sse -mrdrnd -Os
+LDFLAGS        := -T $(TRTS)/enclave.lds -Wl,--build-id=none -z noexecstack \
+                  -lbare-trts -L$(TRTS)
 
-all: encl.sgxs encl.sig
+BUILDDIRS       = $(SUBDIRS:%=build-%)
+CLEANDIRS       = $(SUBDIRS:%=clean-%)
 
-encl.elf: $(SOURCES)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+all: $(BUILDDIRS) encl.elf encl.sgxs encl.sig
+
+%.elf: $(SOURCES)
+	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@ $(LDFLAGS)
 
 %.sgxs: %.elf
 	$(TOOLS)/elf2sgxs $^ $@
@@ -27,5 +35,11 @@ $(PRIVATE_KEY):
 	openssl genrsa -3 3072 > $(PRIVATE_KEY)
 	openssl rsa -in $(PRIVATE_KEY) -pubout -out $(PUBLIC_KEY) 
 
-clean:
+$(BUILDDIRS):
+	$(MAKE) -C $(@:build-%=%)
+
+$(CLEANDIRS):
+	$(MAKE) clean -C $(@:clean-%=%)
+
+clean: $(CLEANDIRS)
 	rm -f *.elf *.o *.sgxs *.sig

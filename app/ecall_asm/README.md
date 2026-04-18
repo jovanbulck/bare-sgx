@@ -1,3 +1,5 @@
+# Bare-metal assembly enclave without C trusted runtime
+
 Sample output:
 
 ```
