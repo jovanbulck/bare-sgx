@@ -20,5 +20,5 @@ void sgx_set_aep(void* aep)
 
 void *sgx_get_tcs(void)
 {
-    return g_encl_tcs;
+    return (void*) g_encl_tcs;
 }
