@@ -27,7 +27,6 @@ int g_fd_dev = 0, g_ecreated = 0;
 uint64_t g_encl_base = 0;
 uint64_t g_encl_size = 0;
 uint64_t g_encl_tcs = 0;
-extern void *baresgx_tcs;
 
 static uint64_t map_enclave_area(uint64_t encl_size)
 {
@@ -207,6 +206,5 @@ void* baresgx_load_sgxs_enclave(const char *sgxs_path, const char * sigstruct_pa
 	close(fd_sig);
 	close(g_fd_dev);
 	
-	baresgx_tcs = (void*) g_encl_tcs;
 	return (void*) g_encl_tcs;
 }
