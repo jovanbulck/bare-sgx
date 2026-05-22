@@ -6,7 +6,7 @@
 
 extern void baresgx_default_aep(void);
 void *baresgx_aep_pointer = baresgx_default_aep;
-void *baresgx_tcs = NULL;
+extern uint64_t g_encl_tcs;
 
 void* sgx_get_aep(void)
 {
@@ -20,5 +20,5 @@ void sgx_set_aep(void* aep)
 
 void *sgx_get_tcs(void)
 {
-    return baresgx_tcs;
+    return (void*) g_encl_tcs;
 }
