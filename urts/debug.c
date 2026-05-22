@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "baresgx/urts.h"
+#include "baresgx/log.h"
 #include "internal/sgx-defs.h"
 
 void dump_hex(uint8_t *buf, int len)

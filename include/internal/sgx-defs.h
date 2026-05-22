@@ -1,6 +1,6 @@
 #ifndef SGX_DEFS_H_INC
 #define SGX_DEFS_H_INC
-#include "../baresgx/util.h"
+#include "util.h"
 
 /*
  * Architectural definitions of SGX structures, as defined in Intel SDM and

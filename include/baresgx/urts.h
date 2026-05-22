@@ -2,7 +2,7 @@
 #define BARE_SGX_URTS_H_INC
 #include <stdint.h>
 #include <asm/sgx.h>
-#include "util.h"
+#include "log.h"
 
 /*
  * Load the enclave provided @param(path) in canonical SGXS enclave format.

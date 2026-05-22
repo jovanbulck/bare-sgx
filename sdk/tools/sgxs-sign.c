@@ -8,7 +8,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include "baresgx/util.h"
+#include "baresgx/log.h"
 #include "internal/sgx-defs.h"
 
 uint64_t g_attributes = SGX_ATTR_MODE64BIT, g_misc = 0;
