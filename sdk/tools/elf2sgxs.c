@@ -133,7 +133,7 @@ static int parse_args(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--nssa")) {
             BARESGX_ASSERT_RET((i+1) < argc, "nssa");
             g_nssa = atoi(argv[++i]);
-            BARESGX_ASSERT_RET(g_nssa > 0, "nssa");
+            BARESGX_ASSERT_RET(g_nssa == 1, "nssa (exceptions not supported)");
         } else if (!strcmp(argv[i], "--entry")) {
             BARESGX_ASSERT_RET((i+1) < argc, "entry");
             g_entry_symbol = argv[++i];
