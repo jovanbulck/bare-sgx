@@ -22,7 +22,7 @@ $(OUTPUT): $(OBJECTS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 %.o : %.S
-	$(AS) $(ASFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
 	rm -f $(OBJECTS) $(OUTPUT)

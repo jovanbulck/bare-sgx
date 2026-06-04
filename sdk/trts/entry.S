@@ -48,6 +48,16 @@ encl_entry:
 	xor     %r15, %r15
 	add     %rax, %rax # OF = SF = AF = CF = 0; ZF = PF = 1
 
+#ifdef STACK_CLEANSING
+	# Opt-in defense-in-depth: wipe .stack except the top 16 bytes
+	lea     encl_stack(%rip), %rdi
+	sub     $4096, %rdi
+	mov     $510, %rcx
+	rep stosq
+	xor     %rdi, %rdi
+	xor     %rcx, %rcx
+#endif
+
 	# Restore eexit_target and ursp
 	pop	    %rbx
 	pop	    %rsp
