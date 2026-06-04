@@ -1,3 +1,4 @@
+#include "baresgx/config.h"
 	.text
 	/*
 	 * EENTER:
@@ -48,11 +49,10 @@ encl_entry:
 	xor     %r15, %r15
 	add     %rax, %rax # OF = SF = AF = CF = 0; ZF = PF = 1
 
-#ifdef STACK_CLEANSING
-	# Opt-in defense-in-depth: wipe .stack except the top 16 bytes
-	lea     encl_stack(%rip), %rdi
-	sub     $4096, %rdi
-	mov     $510, %rcx
+#if BARE_TRTS_ECALL_CLEANSE_STACK
+	# Opt-in defense-in-depth: wipe .stack except the top 2 quadwords
+	lea     encl_stack_top(%rip), %rdi
+	mov     $(BARE_TRTS_NB_STACK_PAGES*4096)/8-2, %rcx
 	rep stosq
 	xor     %rdi, %rdi
 	xor     %rcx, %rcx
@@ -81,7 +81,8 @@ get_enclave_size:
 
 	.section .stack, "aw", @nobits
 	.balign 4096
-	.space 4096
+encl_stack_top:
+	.space BARE_TRTS_NB_STACK_PAGES*4096
 encl_stack:
 
 	# The following 8 bytes (measured as part of MRENCLAVE) will be

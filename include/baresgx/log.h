@@ -6,12 +6,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
+#include "config.h"
 
 /* ------------------------------------------------------------------ */
 /* Debug/logging                                                      */
 /* ------------------------------------------------------------------ */
-
-#define BARESGX_DEBUG  0
 
 #define BARESGX_ASSERT_RET(cond, param)                                  \
     if (!(cond))                                                         \
@@ -32,19 +31,23 @@
         }                                                                    \
     } while(0)
 
-#define baresgx_info(msg, ...)                                          \
-    do {                                                                \
-        printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);              \
-        fflush(stdout);                                                 \
-    } while(0)
-
 #define baresgx_error(msg, ...)                                         \
     do {                                                                \
         printf("[" __FILE__ "] error: " msg "\n", ##__VA_ARGS__);       \
         fflush(stdout);                                                 \
     } while(0)
 
-#if BARESGX_DEBUG
+#if BARE_URTS_LOG_LEVEL >= 1
+    #define baresgx_info(msg, ...)                                          \
+        do {                                                                \
+            printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);              \
+            fflush(stdout);                                                 \
+        } while(0)
+#else
+    #define baresgx_info(msg, ...)
+#endif
+
+#if BARE_URTS_LOG_LEVEL >= 2
     #define baresgx_debug(msg, ...)                                     \
         do {                                                            \
             printf("[" __FILE__ "] " msg "\n", ##__VA_ARGS__);          \
