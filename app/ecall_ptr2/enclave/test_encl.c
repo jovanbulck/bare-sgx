@@ -7,10 +7,37 @@
 //TODO cleaner way to add this.
 #include "internal/sgx-defs.h"
 
+#define SGX_EXCEPTION_VECTOR_UD 6 // for others see SDM Vol-3D part-4 Table 38.9.1.2
+#define SGX_EXCEPTION_HARDWARE 3
+#define CPUID_OPCODE 0xA20F
+#define UD2_OPCODE 0x0B0F
+
+const uint32_t cpuinfo[8][4] = {{0x100, 0x0, 0x0, 0x0}};
 static void ud_handler(struct ssa_frame *frame)
 {
-    // Increments RIP to skip the faulting instruction (UD2 is 2 bytes)
-    frame->sgx_gpr.rip += 2;
+    uint16_t ip_opcode = *(uint16_t *)frame->sgx_gpr.rip;
+
+	if (ip_opcode == CPUID_OPCODE)
+    {
+		uint32_t leaf = (uint32_t)frame->sgx_gpr.rax;
+    	uint32_t sub_leaf = (uint32_t)frame->sgx_gpr.rcx;
+
+		if (leaf != 0x0 && leaf != 0x1 && (leaf != 0x4 || sub_leaf != 0x0) && (leaf != 0x7 || sub_leaf != 0x0))
+        {
+            return;
+        }
+
+        frame->sgx_gpr.rax = cpuinfo[leaf][0];
+        frame->sgx_gpr.rbx = cpuinfo[leaf][1];
+        frame->sgx_gpr.rcx = cpuinfo[leaf][2];
+        frame->sgx_gpr.rdx = cpuinfo[leaf][3];
+		frame->sgx_gpr.rip += 2;
+	}
+	else if (ip_opcode == UD2_OPCODE)
+	{
+		// Increments RIP to skip the faulting instruction (UD2 is 2 bytes)
+    	frame->sgx_gpr.rip += 2;
+	}
 }
 
 static void do_encl_op_add(void *u_op)
@@ -43,6 +70,17 @@ static void do_encl_op_info(void *u_op)
     *op.size_pt = get_enclave_size();
 }
 
+static void do_encl_op_return(void *u_op)
+{
+	struct encl_op_return op;
+	SAFE_COPY_STRUCT(&op, u_op);
+	ASSERT_OUTSIDE_ENCLAVE(op.rv_pt, sizeof(op.rv_pt));
+
+	uint32_t result;
+    asm volatile("cpuid" : "=a"(result) : "a"(0) : "rbx", "rcx", "rdx");
+    *op.rv_pt = result;
+}
+
 /*
  * Symbol placed at the start of the enclave image by the linker script.
  * Declare this extern symbol with visibility "hidden" to ensure the compiler
@@ -60,6 +98,7 @@ volatile encl_op_t encl_op_array[ENCL_OP_MAX] = {
 	do_encl_op_add,
 	do_encl_op_sub,
 	do_encl_op_info,
+	do_encl_op_return,
 };
 
 void encl_body(void *rdi)
@@ -80,16 +119,25 @@ void encl_body(void *rdi)
 	(*op)(rdi);
 }
 
-void encl_exception_handler(void *rdi, void *rsi, void *rdx, void *rcx)
+/*
+Registers upon entry:
+    RDI - exit_info
+    RSI - CSSA
+    RDX - TCS
+*/
+void encl_exception_handler(void *rdi, void *rsi, void *rdx)
 {
 	(void)rdi;
-    (void)rsi;
+	(void)rsi;
+    //uint64_t cssa = (uint64_t)rsi;
 
-    uint64_t cssa = (uint64_t)rdx;
-    struct sgx_tcs *tcs = (struct sgx_tcs *)rcx;
+    struct sgx_tcs *tcs = (struct sgx_tcs *)rdx;
 
-    struct ssa_frame *frame = (struct ssa_frame *)((uint64_t)tcs + (cssa * 4096));
-    if (frame->sgx_gpr.exitinfo.valid == 1)
+	struct ssa_frame *frame = (struct ssa_frame *)((uint64_t)tcs + 4096);
+
+    if (frame->sgx_gpr.exitinfo.valid == 1 &&
+        frame->sgx_gpr.exitinfo.vector == SGX_EXCEPTION_VECTOR_UD &&
+        frame->sgx_gpr.exitinfo.exit_type == SGX_EXCEPTION_HARDWARE)
     {
         ud_handler(frame);
     }

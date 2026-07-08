@@ -80,5 +80,12 @@ int main(void)
     baresgx_enter_enclave(tcs, (uint64_t) &arg);
     printf("\tL enclave returned %ld - %ld = %ld\n", arg.val1, arg.val2, rv);
 
+    struct encl_op_return return_op = {
+        .header = {.type = ENCL_OP_RETURN},
+        .rv_pt = &rv,
+    };
+    baresgx_enter_enclave(tcs, (uint64_t) &return_op);
+    printf("\tL enclave returned CPUID result = %ld\n", rv);
+
     return 0;
 }
