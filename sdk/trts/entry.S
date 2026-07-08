@@ -35,6 +35,7 @@ encl_entry:
     mov     %rsi, %rdi
 	call	encl_body
 
+.cleanup:
 	# Clear general purpose registers (excl XRSTOR for now, cf above)
 	xor		%rax, %rax
 	xor     %rcx, %rcx
@@ -62,7 +63,6 @@ encl_entry:
 	xor     %rcx, %rcx
 #endif
 
-.restore_caller_stack:
 	# Restore eexit_target and ursp
 	pop	    %rbx
 	pop	    %rsp
@@ -82,17 +82,16 @@ encl_entry:
 	# Push the return address (provided in RCX by EENTER)
 	push	%rcx
 
-	# pass CSSA (in RAX) as 3rd argument (RDX) to the C handler
-	# and TCS (in RBX) as 4th argument (RCX)
+	# pass CSSA (in RAX) as 2rd argument (RDX) to the C handler
+	# and TCS (in RBX) as 3th argument (RCX)
     mov     %rsi, %rdi
-    mov     %rdx, %rsi
-	mov		%rax, %rdx
-	mov		%rbx, %rcx
+    mov     %rax, %rsi
+	mov		%rbx, %rdx
 
 	# call the C-level exception handler inside the enclave
 	call	encl_exception_handler
 
-	jmp .restore_caller_stack
+	jmp .cleanup
 #else
 	ud2
 #endif
