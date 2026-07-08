@@ -33,6 +33,7 @@ encl_entry:
 
 	# call dispatch function with attacker argument
     mov     %rsi, %rdi
+	mov     %rbx, %rsi
 	call	encl_body
 
 .cleanup:
@@ -74,13 +75,18 @@ encl_entry:
 
 .exception_entry:
 #if BARE_TRTS_EXCEPTION_HANDLING
+
 	# Set up enclave stack
 	lea     encl_exc_stack(%rip), %r11
 	xchg	%rsp, %r11
-	push	%r11
 
-	# Push the return address (provided in RCX by EENTER)
+	# save u_rsp and eexit_target
+	push	%r11
 	push	%rcx
+
+	# save CSSA and TCS
+	push    %rax
+    push    %rbx
 
 	# pass CSSA (in RAX) as 2rd argument (RDX) to the C handler
 	# and TCS (in RBX) as 3th argument (RCX)
@@ -91,7 +97,85 @@ encl_entry:
 	# call the C-level exception handler inside the enclave
 	call	encl_exception_handler
 
+
+	# Restore TCS and CSSA
+	pop     %rbx
+    pop     %rax
+
+#if BARE_TRTS_AEX_NOTIFY
+
+	# Restore eexit_target and ursp
+	pop	    %rbx
+	pop	    %rsp
+
+.restore_ssa_0_state:
+	/*
+	* Calculate SSA[0] frame adress
+	* frame = TCS + 4096 + (CSSA-1)*4096 = TCS + CSSA*4096
+	* sgx_gpr is last 184 bytes of ssa frame: 4096 - 184 = 3912
+	*/
+	mov 	%rbx, %rcx		# RCX = TCS
+	add     $4096, %rcx		# RCX = SSA[0]
+	add     $3912, %rcx		# RCX = sgx_gpr
+
+	/* restore other registers */
+    mov     8*5(%rcx), %rbp
+    mov     8*6(%rcx), %rsi
+    mov     8*7(%rcx), %rdi
+    mov     8*8(%rcx), %r8
+    mov     8*9(%rcx), %r9
+    mov     8*10(%rcx), %r10
+    mov     8*11(%rcx), %r11
+    mov     8*12(%rcx), %r12
+    mov     8*13(%rcx), %r13
+    mov     8*14(%rcx), %r14
+    mov     8*15(%rcx), %r15
+    # NOTE: we do this on SSA[1] stack _before_ restoring SSA[0] stack to avoid
+    # clobbering the red zone or smashex vulnerabilities(!)
+    # following instructions cannot modify flags
+    push    8*16(%rcx) 			# rflags
+    popf
+    mov     8*4(%rcx), %rsp
+
+    .global atomic_start
+atomic_start:
+	# EDECCSSA
+    movq	$9, %rax
+    enclu
+
+	lea	encl_stack(%rip), %rdx 	# stack base addres
+
+	movq aex_rip(%rip), %rbx	# interrputed instruction
+	movl    $12, %ecx
+	shrx    %rcx, %rbx, %rbx
+	shlx    %rcx, %rbx, %rbx	# Align rbx to a 4KB page boundary
+
+	# Prefetch all cache lines in stack page and code page
+	mov $4096, %ecx
+.prefetch_loop:
+	lea -0x40(%ecx), %ecx 		# ecx -= 64
+	mov (%rdx, %rcx), %rax		# stack page tickle
+	mov (%rbx, %rcx), %rax		# code page tickle
+	jrcxz   .restore_last_regs  # if ecx == 0, exit loop
+    jmp     .prefetch_loop 		# loop back (loops 64 times)
+
+
+
+.restore_last_regs:
+    # Restore RAX and jump to RIP
+    movq   	aex_rax(%rip), %rax
+    movq   	aex_rcx(%rip), %rcx
+	movq   	aex_rdx(%rip), %rdx
+	movq   	aex_rbx(%rip), %rbx
+	jmp		*aex_rip(%rip)
+
+    .global atomic_end
+atomic_end:
+
+#else
 	jmp .cleanup
+#endif
+
 #else
 	ud2
 #endif
@@ -118,6 +202,41 @@ encl_stack:
 	.balign 4096
 	.space 4096
 encl_exc_stack:
+#endif
+
+#if BARE_TRTS_AEX_NOTIFY
+
+	/*
+	 * Manual wrappers to ensure these are PIC-relative to enclave base
+	 */
+	.global get_atomic_start
+get_atomic_start:
+	lea atomic_start(%rip), %rax
+	ret
+
+	.global get_atomic_end
+get_atomic_end:
+	lea atomic_end(%rip), %rax
+	ret
+
+.data
+# Global vars to hold register values during resumption flow.
+	.balign 8
+    .global aex_rip
+aex_rip:
+    .quad 0
+    .global aex_rax
+aex_rax:
+    .quad 0
+    .global aex_rcx
+aex_rcx:
+    .quad 0
+    .global aex_rdx
+aex_rdx:
+    .quad 0
+    .global aex_rbx
+aex_rbx:
+    .quad 0
 #endif
 
 	# The following 8 bytes (measured as part of MRENCLAVE) will be

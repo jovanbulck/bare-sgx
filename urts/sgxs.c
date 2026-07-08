@@ -44,7 +44,7 @@ static uint64_t map_enclave_area(uint64_t encl_size)
 	return base;
 }
 
-static int ioc_ecreate(int debug, uint8_t *sgxs, int sgxs_offset)
+static int ioc_ecreate(int debug, int aexnotify, uint8_t *sgxs, int sgxs_offset)
 {
 	struct sgx_enclave_create ioc_create = {0};
 	struct sgxs_ecreate *ecreate;
@@ -55,15 +55,17 @@ static int ioc_ecreate(int debug, uint8_t *sgxs, int sgxs_offset)
 	g_encl_base = map_enclave_area(ecreate->size);
 	baresgx_debug("ECREATE    : size=%#lx; ssaframesize=%u; base=%#lx",
 			ecreate->size, ecreate->ssaframesize, g_encl_base);
-	
+
 	secs.ssa_frame_size = ecreate->ssaframesize;
 	secs.attributes = SGX_ATTR_MODE64BIT;
+	if (aexnotify)
+		secs.attributes |= SGX_ATTR_ASYNC_EXIT_NOTIFY;
 	secs.attributes |= debug ? SGX_ATTR_DEBUG : 0x0;
 	secs.xfrm = 3;
 	secs.base = g_encl_base;
 	secs.size = ecreate->size;
 	g_encl_size = ecreate->size;
-	
+
 	ioc_create.src = (unsigned long)&secs;
 	BARESGX_ASSERT(ioctl(g_fd_dev, SGX_IOC_ENCLAVE_CREATE, &ioc_create) >= 0);
 	sgxs_offset += sizeof(struct sgxs_ecreate);
@@ -123,7 +125,7 @@ static int ioc_eadd(uint8_t *sgxs, int sgxs_offset)
 	}
 	ASSERT_SGXS_CANONICAL(nb_eextend == 0 || nb_eextend == (PAGE_SIZE / EEXTEND_SIZE),
 		"EADD followed by %d EEXTEND records (expect 0 or 16)", nb_eextend);
-	
+
 	BARESGX_ASSERT(ioctl(g_fd_dev, SGX_IOC_ENCLAVE_ADD_PAGES, &ioc_add) >= 0);
 	BARESGX_ASSERT(ioc_add.count == PAGE_SIZE);
 
@@ -154,11 +156,11 @@ static void ioc_einit(struct sgx_sigstruct *sigstruct)
 
 	ioc_einit.sigstruct = (uint64_t) sigstruct;
 	BARESGX_ASSERT(ioctl(g_fd_dev, SGX_IOC_ENCLAVE_INIT, &ioc_einit) >= 0);
-	
+
 	g_ecreated = 0;
 }
 
-void* baresgx_load_sgxs_enclave(const char *sgxs_path, const char * sigstruct_path, int debug)
+void* baresgx_load_sgxs_enclave(const char *sgxs_path, const char * sigstruct_path, int debug, int aexnotify)
 {
 	int fd_sgxs, fd_sig, offset = 0;
     uint8_t *sgxs = NULL;
@@ -181,7 +183,7 @@ void* baresgx_load_sgxs_enclave(const char *sgxs_path, const char * sigstruct_pa
 		switch (tag = *((uint64_t *)(sgxs + offset)))
 		{
 			case SGXS_TAG_ECREATE:
-				offset = ioc_ecreate(debug, sgxs, offset);
+				offset = ioc_ecreate(debug, aexnotify, sgxs, offset);
 				break;
 			case SGXS_TAG_EADD:
 				offset = ioc_eadd(sgxs, offset);
@@ -205,6 +207,6 @@ void* baresgx_load_sgxs_enclave(const char *sgxs_path, const char * sigstruct_pa
 	close(fd_sgxs);
 	close(fd_sig);
 	close(g_fd_dev);
-	
+
 	return (void*) g_encl_tcs;
 }

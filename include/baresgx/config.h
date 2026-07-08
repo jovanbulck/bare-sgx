@@ -33,5 +33,9 @@
  */
 #define BARE_TRTS_EXCEPTION_HANDLING            1
 
+/*
+ * enclave aex notify support TODO expand explanation
+ */
+#define BARE_TRTS_AEX_NOTIFY                    1
 
 #endif
