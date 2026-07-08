@@ -7,6 +7,10 @@
 	 *	- rcx: &eexit -- address of instruction following EENTER
 	 */
 encl_entry:
+	cmp $1, %rax
+    je .exception_entry
+
+.regular_entry:
     lea     encl_stack(%rip), %rax
 	xchg	%rsp, %rax
 
@@ -58,6 +62,7 @@ encl_entry:
 	xor     %rcx, %rcx
 #endif
 
+.restore_caller_stack:
 	# Restore eexit_target and ursp
 	pop	    %rbx
 	pop	    %rsp
@@ -66,6 +71,31 @@ encl_entry:
 	mov		$4, %rax
 	enclu
 	ud2
+
+.exception_entry:
+#if BARE_TRTS_EXCEPTION_HANDLING
+	# Set up enclave stack
+	lea     encl_exc_stack(%rip), %r11
+	xchg	%rsp, %r11
+	push	%r11
+
+	# Push the return address (provided in RCX by EENTER)
+	push	%rcx
+
+	# pass CSSA (in RAX) as 3rd argument (RDX) to the C handler
+	# and TCS (in RBX) as 4th argument (RCX)
+    mov     %rsi, %rdi
+    mov     %rdx, %rsi
+	mov		%rax, %rdx
+	mov		%rbx, %rcx
+
+	# call the C-level exception handler inside the enclave
+	call	encl_exception_handler
+
+	jmp .restore_caller_stack
+#else
+	ud2
+#endif
 
     .global get_enclave_base
 get_enclave_base:
@@ -84,6 +114,12 @@ get_enclave_size:
 encl_stack_top:
 	.space BARE_TRTS_NB_STACK_PAGES*4096
 encl_stack:
+
+#if BARE_TRTS_EXCEPTION_HANDLING
+	.balign 4096
+	.space 4096
+encl_exc_stack:
+#endif
 
 	# The following 8 bytes (measured as part of MRENCLAVE) will be
 	# filled in by the untrusted loader with the total size of the

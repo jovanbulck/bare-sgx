@@ -256,4 +256,68 @@ MK_ENUM(sgx_attribute, SGX_ATTR_LIST);
 
 MK_ENUM(sgx_miscselect, SGX_MISC_LIST);
 
+/*
+ * Based on https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3d-part-4-manual.pdf
+ * Table 38-7, 38-8 and 38-9
+ */
+
+struct exit_info
+{
+	uint32_t vector : 8;	/* Exception number of exceptions reported inside enclave */
+	uint32_t exit_type : 3; /* 011b: Hardware exceptions.
+							   110b: Software exceptions.
+							   Other values: Reserved */
+	uint32_t reserved : 20; /* Reserved as zero*/
+	uint32_t valid : 1;		/* 0: unsupported exceptions, 1: Supported exceptions */
+};
+
+struct reserved_field_t
+{
+	uint32_t reserved_1 : 24;
+	uint32_t aex_notify : 1; // Flag enabling AEX-Notify for this SSA context
+	uint32_t reserved_2 : 7;
+};
+
+struct gprsgx
+{
+	uint64_t rax;
+	uint64_t rcx;
+	uint64_t rdx;
+	uint64_t rbx;
+	uint64_t rsp;
+	uint64_t rbp;
+	uint64_t rsi;
+	uint64_t rdi;
+	uint64_t r8;
+	uint64_t r9;
+	uint64_t r10;
+	uint64_t r11;
+	uint64_t r12;
+	uint64_t r13;
+	uint64_t r14;
+	uint64_t r15;
+	uint64_t rflags;   /*Flag register*/
+	uint64_t rip;	   /*Instruction pointer*/
+	uint64_t ursp;	   /*Non-Enclave (outside) stack pointer. Saved by EENTER, restored on AEX.*/
+	uint64_t urbp;	   /*Non-Enclave (outside) RBP pointer. Saved by EENTER, restored on AEX.*/
+	struct exit_info exitinfo; /*Contains information about exceptions that cause AEXs,
+						*which might be needed by enclave software (see Section 38.9.1.1).*/
+	struct reserved_field_t reserved; /* bits 0-23: reserved, bit 24: aex_notify, bits 25-31: reserved*/
+	uint64_t fsbase;
+	uint64_t gsbase;
+};
+
+/*
+SSA Frame is one page, 4096 bytes
+GPR is 184 bytes
+4096 - 184 = 3912
+*/
+#define SSA_FRAME_BEFORE_GPR_SIZE 3912
+
+struct ssa_frame
+{
+	uint8_t rest[SSA_FRAME_BEFORE_GPR_SIZE];
+	struct gprsgx sgx_gpr;
+};
+
 #endif

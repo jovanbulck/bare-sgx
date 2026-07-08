@@ -41,13 +41,13 @@ static void sgxs_add_guard_page(void)
     g_sgxs_offset &= PAGE_MASK;
     g_sgxs_offset += PAGE_SIZE;
 }
-    
+
 static void sgxs_add_page(const void* data, uint64_t secinfo_flags, int measure)
 {
     struct sgxs_eadd eadd = {0x00};
     struct sgxs_eextend eextend = {0x00};
     int i;
-    
+
     BARESGX_ASSERT(IS_PAGE_ALIGNED(g_sgxs_offset));
     eadd.tag = SGXS_TAG_EADD;
     eadd.offset = g_sgxs_offset;
@@ -133,7 +133,8 @@ static int parse_args(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--nssa")) {
             BARESGX_ASSERT_RET((i+1) < argc, "nssa");
             g_nssa = atoi(argv[++i]);
-            BARESGX_ASSERT_RET(g_nssa == 1, "nssa (exceptions not supported)");
+            //BARESGX_ASSERT_RET(g_nssa == 1, "nssa (exceptions not supported)");
+            BARESGX_ASSERT_RET(g_nssa > 0, "nssa");
         } else if (!strcmp(argv[i], "--entry")) {
             BARESGX_ASSERT_RET((i+1) < argc, "entry");
             g_entry_symbol = argv[++i];
@@ -169,7 +170,7 @@ int main(int argc, char *argv[])
     const char *name;
     struct stat sb;
     uint64_t flags;
-    
+
     if (parse_args(argc, argv) < 0) {
         fprintf(stderr, "Usage: %s [--ssaframesize=N] [--nssa=N] [--entry=symbol_name] <input_elf> <output_sgxs>\n", argv[0]);
         return -1;
@@ -221,7 +222,7 @@ int main(int argc, char *argv[])
 
     /* finally add the TCS and SSA pages based on the user input */
     sgxs_add_guard_page();
-    
+
     tcs.entry_offset = elf_symbol(g_entry_symbol, elf);
     tcs.ssa_offset = g_sgxs_offset + PAGE_SIZE; /* SSA follows immediately after TCS */
     tcs.nr_ssa_frames = g_nssa;

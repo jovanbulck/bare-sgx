@@ -3,7 +3,7 @@
 
 /*
  * Log level for the untrusted runtime:
- * 
+ *
  * \arg 0 = print only error msgs
  * \arg 1 = print info + error msgs
  * \arg 2 = print debug + info + error msgs
@@ -27,5 +27,11 @@
  * to protect against stack overflows.
  */
 #define BARE_TRTS_NB_STACK_PAGES                1
+
+/*
+ * enclave exception handling support TODO expand explanation
+ */
+#define BARE_TRTS_EXCEPTION_HANDLING            1
+
 
 #endif
