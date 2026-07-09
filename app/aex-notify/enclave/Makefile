@@ -25,7 +25,7 @@ all: $(BUILDDIRS) encl.elf encl.sgxs encl.sig
 
 %.sgxs: %.elf
 	$(TOOLS)/elf2sgxs --nssa 2 --aexnotify $^ $@
-	$(TOOLS)/sgxs-info summary $@ || true
+	sgxs-info summary $@ || true
 	sha256sum $@ || true
 
 %.sig: %.sgxs $(PRIVATE_KEY)
