@@ -32,7 +32,7 @@ static void aex_counter_mitigation()
     aex_counter++;
     if (aex_counter > AEX_COUNTER_LIMIT)
     {
-        asm("hlt");
+        //asm("hlt");
         /*we probably want a better way to halt the enclave than to crash it like this*/
     }
 }

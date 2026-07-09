@@ -1,13 +1,15 @@
 BARESGX         = ../..
 ENCLAVE         = enclave
+LIBSGXSTEP_DIR  = ../../../sgx-step
+LIBSGXSTEP      = $(LIBSGXSTEP_DIR)/libsgxstep
 
-SUBDIRS         = $(BARESGX)/urts $(BARESGX)/sdk/tools $(ENCLAVE)
+SUBDIRS         = $(BARESGX)/urts $(BARESGX)/sdk/tools $(ENCLAVE) $(LIBSGXSTEP)
 
 CC              := gcc
 LD              := gcc
-INCLUDE         := -I$(BARESGX)/include/
-CFLAGS          += -Wall -Werror -g -Os
-LDFLAGS         := -z noexecstack -lbare-urts -L$(BARESGX)/urts
+INCLUDE         := -I$(BARESGX)/include/ -I$(LIBSGXSTEP_DIR)
+CFLAGS          += -Wall -g -Os
+LDFLAGS         := -z noexecstack -lbare-urts -lsgx-step -L$(LIBSGXSTEP) -L$(BARESGX)/urts 
 
 SOURCES         = $(shell ls *.c)
 OBJECTS         = $(SOURCES:.c=.o)
