@@ -73,13 +73,18 @@ int main(void)
     arg.rv_pt = &rv;
     baresgx_enter_enclave(tcs, (uint64_t) &arg);
     printf("\tL enclave returned %ld + %ld = %ld\n", arg.val1, arg.val2, rv);
+    baresgx_info("aep_counter after 2nd call = %d", get_aep_counter());
 
+    reset_aep_counter();
+    baresgx_info("aep_counter reset");
     arg.header.type = ENCL_OP_SUB;
     arg.val1 = 1300;
     arg.val2 = 37;
     arg.rv_pt = &rv;
     baresgx_enter_enclave(tcs, (uint64_t) &arg);
     printf("\tL enclave returned %ld - %ld = %ld\n", arg.val1, arg.val2, rv);
+    baresgx_info("aep_counter after 3th call = %d", get_aep_counter());
+
 
     struct encl_op_return return_op = {
         .header = {.type = ENCL_OP_RETURN},

@@ -18,4 +18,7 @@ void* sgx_get_aep(void);
 void  sgx_set_aep(void* aep);
 void* sgx_get_tcs(void);
 
+int get_aep_counter(void);
+void reset_aep_counter(void);
+
 #endif

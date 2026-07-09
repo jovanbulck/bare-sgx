@@ -12,6 +12,31 @@
 #define CPUID_OPCODE 0xA20F
 #define UD2_OPCODE 0x0B0F
 
+#define AEX_COUNTER_LIMIT 100
+uint64_t aex_counter = 0;
+static volatile uint64_t encl_sub_delay_iterations = 30000000UL;
+/*
+ * 30000000UL usually results in about 90 aex's during initial testing,
+ * but this is highly dependent on the system
+ * with threshold of 100 aex's, anything higher than this should be enough to trigger the mitigation
+*/
+static volatile uint64_t encl_sub_delay_sink;
+
+static void reset_aex_counter()
+{
+    aex_counter = 0;
+}
+
+static void aex_counter_mitigation()
+{
+    aex_counter++;
+    if (aex_counter > AEX_COUNTER_LIMIT)
+    {
+        asm("hlt");
+        /*we probably want a better way to halt the enclave than to crash it like this*/
+    }
+}
+
 const uint32_t cpuinfo[8][4] = {{0x100, 0x0, 0x0, 0x0}};
 static void ud_handler(struct ssa_frame *frame)
 {
@@ -60,9 +85,15 @@ static void do_encl_op_sub(void *u_op)
 	struct encl_op_math op;
 	SAFE_COPY_STRUCT(&op, u_op);
 	ASSERT_OUTSIDE_ENCLAVE(op.rv_pt, sizeof(op.rv_pt));
-
-	asm volatile("ud2");
     *op.rv_pt = op.val1 - op.val2;
+
+	uint64_t i;
+	uint64_t acc = 0;
+    for (i = 0; i < encl_sub_delay_iterations; i++) {
+        acc += (i & 1);
+        asm volatile("pause" ::: "memory");
+    }
+	encl_sub_delay_sink = acc;
 }
 
 static void do_encl_op_info(void *u_op)
@@ -115,6 +146,9 @@ void encl_body(void *rdi, void *rsi)
 	//(void) frame;
 	frame->sgx_gpr.reserved.aex_notify = 1; // segfaults on 1, but should work
 
+	//reset mitigation counter
+	reset_aex_counter();
+
 	//regular operation dispatch
 	encl_op_t op;
 	struct encl_op_header header;
@@ -158,6 +192,9 @@ void encl_exception_handler(void *rdi, void *rsi, void *rdx)
     {
         ud_handler(frame);
     }
+
+	/*Interrupt counting*/
+    aex_counter_mitigation();
 
 	 /* AEX-Notify restartable atomic section */
     if (!(frame->sgx_gpr.rip >= get_atomic_start() && frame->sgx_gpr.rip < get_atomic_end()))
