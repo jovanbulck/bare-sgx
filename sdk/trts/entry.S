@@ -75,7 +75,6 @@ encl_entry:
 
 .exception_entry:
 #if BARE_TRTS_EXCEPTION_HANDLING
-
 	# Set up enclave stack
 	lea     encl_exc_stack(%rip), %r11
 	xchg	%rsp, %r11
@@ -97,15 +96,13 @@ encl_entry:
 	# call the C-level exception handler inside the enclave
 	call	encl_exception_handler
 
-
 	# Restore TCS and CSSA
 	pop     %rbx
     pop     %rax
 
 #if BARE_TRTS_AEX_NOTIFY
-
 	# Restore eexit_target and ursp
-	pop	    %rbx
+	pop	    %rcx
 	pop	    %rsp
 
 .restore_ssa_0_state:
@@ -192,6 +189,21 @@ get_enclave_size:
 	mov 	__enclave_size(%rip), %rax
 	ret
 
+#if BARE_TRTS_AEX_NOTIFY
+	/*
+	 * Manual wrappers to ensure these are PIC-relative to enclave base
+	 */
+	.global get_atomic_start
+get_atomic_start:
+	lea atomic_start(%rip), %rax
+	ret
+
+	.global get_atomic_end
+get_atomic_end:
+	lea atomic_end(%rip), %rax
+	ret
+#endif
+
 	.section .stack, "aw", @nobits
 	.balign 4096
 encl_stack_top:
@@ -205,20 +217,6 @@ encl_exc_stack:
 #endif
 
 #if BARE_TRTS_AEX_NOTIFY
-
-	/*
-	 * Manual wrappers to ensure these are PIC-relative to enclave base
-	 */
-	.global get_atomic_start
-get_atomic_start:
-	lea atomic_start(%rip), %rax
-	ret
-
-	.global get_atomic_end
-get_atomic_end:
-	lea atomic_end(%rip), %rax
-	ret
-
 .data
 # Global vars to hold register values during resumption flow.
 	.balign 8

@@ -28,8 +28,8 @@ static void illegal_instruction_handler(int sig, siginfo_t *info, void *context)
     //printf("Exiting safely.\n");
     //exit(1);
 
-    baresgx_enter_enclave(tcs, 0);
-    printf("returned from exception handling \n");
+    //baresgx_enter_enclave(tcs, 0);
+    //printf("returned from exception handling \n");
 }
 
 int main(void)
@@ -81,15 +81,12 @@ int main(void)
     baresgx_enter_enclave(tcs, (uint64_t) &arg);
     printf("\tL enclave returned %ld - %ld = %ld\n", arg.val1, arg.val2, rv);
 
-
-    /*
     struct encl_op_return return_op = {
         .header = {.type = ENCL_OP_RETURN},
         .rv_pt = &rv,
     };
     baresgx_enter_enclave(tcs, (uint64_t) &return_op);
     printf("\tL enclave returned CPUID result = %ld\n", rv);
-    */
 
     printf("\n--- Test completed successfully ---\n");
     return 0;

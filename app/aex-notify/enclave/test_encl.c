@@ -61,7 +61,7 @@ static void do_encl_op_sub(void *u_op)
 	SAFE_COPY_STRUCT(&op, u_op);
 	ASSERT_OUTSIDE_ENCLAVE(op.rv_pt, sizeof(op.rv_pt));
 
-	//asm volatile("ud2");
+	asm volatile("ud2");
     *op.rv_pt = op.val1 - op.val2;
 }
 
@@ -113,7 +113,7 @@ void encl_body(void *rdi, void *rsi)
 	struct sgx_tcs *tcs = (struct sgx_tcs *)rsi;
 	struct ssa_frame *frame = (struct ssa_frame *)((uint64_t)tcs + 4096);
 	//(void) frame;
-	frame->sgx_gpr.reserved.aex_notify = 0; // segfaults on 1, but should work
+	frame->sgx_gpr.reserved.aex_notify = 1; // segfaults on 1, but should work
 
 	//regular operation dispatch
 	encl_op_t op;
