@@ -1,6 +1,7 @@
 #ifndef SGX_DEFS_H_INC
 #define SGX_DEFS_H_INC
 #include "util.h"
+#include "arch.h"
 
 /*
  * Architectural definitions of SGX structures, as defined in Intel SDM and
@@ -333,9 +334,7 @@ struct gprsgx
 	uint64_t fsbase;
 	uint64_t gsbase;
 };
-
-/*note: current exception handling implementation assumes ssaframesize = 1 page*/
-#define SSA_FRAME_BEFORE_GPR_SIZE PAGE_SIZE - sizeof(struct gprsgx)
+_Static_assert(sizeof(struct gprsgx) == GPRSGX_SIZE);
 
 struct ssa_frame
 {

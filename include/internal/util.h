@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include "../baresgx/log.h"
+#include "arch.h"
 
 /* ------------------------------------------------------------------ */
 /* Bit flags                                                          */
@@ -14,7 +15,6 @@
 
 #define BIT(nr)					(1UL << (nr))
 
-#define PAGE_SIZE               4096
 #define PAGE_MASK               (~(PAGE_SIZE - 1))
 #define IS_PAGE_ALIGNED(p)      (((uintptr_t)(p) & (PAGE_SIZE - 1)) == 0)
 

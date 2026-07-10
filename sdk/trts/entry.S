@@ -1,6 +1,5 @@
 #include "baresgx/config.h"
-#define PAGE_SIZE	4096
-#define SSA_FRAME_BEFORE_GPR_SIZE	3912
+#include "internal/arch.h"
 	.text
 	/*
 	 * EENTER:
@@ -127,10 +126,8 @@ encl_entry:
 	*
 	* \note: current exception handling implementation assumes ssaframesize = 1 page
 	*/
-	mov 	%rbx, %rcx		# RCX = TCS
-	# add     $4096, %rcx		# RCX = SSA[0]
-	# add     $3912, %rcx		# RCX = sgx_gpr
-	add     $PAGE_SIZE+SSA_FRAME_BEFORE_GPR_SIZE, %rcx		# RCX = &SSA[0].GPRSGX
+	mov 	%rbx, %rcx		                   # RCX = TCS
+  add     $PAGE_SIZE+SSA_FRAME_BEFORE_GPR_SIZE, %rcx # RCX = &SSA[0].GPRSGX
 
 	/* restore SSA[0] GPRs (except those used in the atomic stub)  */
     mov     8*5(%rcx), %rbp
