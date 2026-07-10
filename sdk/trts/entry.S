@@ -1,4 +1,5 @@
 #include "baresgx/config.h"
+#include "internal/arch.h"
 	.text
 	/*
 	 * EENTER:
@@ -111,9 +112,8 @@ encl_entry:
 	* frame = TCS + 4096 + (CSSA-1)*4096 = TCS + CSSA*4096
 	* sgx_gpr is last 184 bytes of ssa frame: 4096 - 184 = 3912
 	*/
-	mov 	%rbx, %rcx		# RCX = TCS
-	add     $4096, %rcx		# RCX = SSA[0]
-	add     $3912, %rcx		# RCX = sgx_gpr
+	mov 	%rbx, %rcx		                   # RCX = TCS
+        add     $PAGE_SIZE+SSA_FRAME_BEFORE_GPR_SIZE, %rcx # RCX = &SSA[0].GPRSGX
 
 	/* restore other registers */
     mov     8*5(%rcx), %rbp
