@@ -29,13 +29,23 @@
 #define BARE_TRTS_NB_STACK_PAGES                1
 
 /*
- * enclave exception handling support TODO expand explanation
+ * Opt-in support for handling exceptions:
+ * When enabled, these exceptions can be caught and handled
+ * by the enclave code rather than terminating execution.
  */
-#define BARE_TRTS_EXCEPTION_HANDLING            1
-
+#ifndef BARE_TRTS_EXCEPTION_HANDLING
+#define BARE_TRTS_EXCEPTION_HANDLING            0
+#endif
 /*
- * enclave aex notify support TODO expand explanation
+ * Opt-in support for AEX-Notify enabled ennclaves:
+ *
+ * \note requires enclacves build with --aex-notify flag,
+ * and the enclave must be loaded with argument aex_notify=1
+ *
+ * \note this requires BARE_TRTS_EXCEPTION_HANDLING to be enabled.
  */
-#define BARE_TRTS_AEX_NOTIFY                    1
+#ifndef BARE_TRTS_AEX_NOTIFY
+#define BARE_TRTS_AEX_NOTIFY                    0
+#endif
 
 #endif

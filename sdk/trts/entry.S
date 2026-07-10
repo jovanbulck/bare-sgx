@@ -1,4 +1,6 @@
 #include "baresgx/config.h"
+#define PAGE_SIZE	4096
+#define SSA_FRAME_BEFORE_GPR_SIZE	3912
 	.text
 	/*
 	 * EENTER:
@@ -31,12 +33,22 @@ encl_entry:
 	andq 	$~0x40000, (%rsp)
 	popfq
 
+#if BARE_TRTS_EXCEPTION_HANDLING && BARE_TRTS_AEX_NOTIFY
+    # Set frame->sgx_gpr.aex_notify = 1 for SSA[0]
+    # sgx_gpr = TCS + 4096 + 3912
+    mov	%rbx, %rcx
+    # add	$4096, %rcx
+    # add	$3912, %rcx
+    add	$PAGE_SIZE+SSA_FRAME_BEFORE_GPR_SIZE, %rcx
+    # aex_notify is the 167th byte within gprsgx
+    movb	$1, 167(%rcx)
+#endif
+
 	# call dispatch function with attacker argument
     mov     %rsi, %rdi
-	mov     %rbx, %rsi
 	call	encl_body
 
-.cleanup:
+.ecall_ret:
 	# Clear general purpose registers (excl XRSTOR for now, cf above)
 	xor		%rax, %rax
 	xor     %rcx, %rcx
@@ -74,7 +86,9 @@ encl_entry:
 	ud2
 
 .exception_entry:
-#if BARE_TRTS_EXCEPTION_HANDLING
+#if !BARE_TRTS_EXCEPTION_HANDLING
+	ud2
+#else
 	# Set up enclave stack
 	lea     encl_exc_stack(%rip), %r11
 	xchg	%rsp, %r11
@@ -89,9 +103,7 @@ encl_entry:
 
 	# pass CSSA (in RAX) as 2rd argument (RDX) to the C handler
 	# and TCS (in RBX) as 3th argument (RCX)
-    mov     %rsi, %rdi
-    mov     %rax, %rsi
-	mov		%rbx, %rdx
+    mov     %rbx, %rdi
 
 	# call the C-level exception handler inside the enclave
 	call	encl_exception_handler
@@ -100,22 +112,27 @@ encl_entry:
 	pop     %rbx
     pop     %rax
 
-#if BARE_TRTS_AEX_NOTIFY
-	# Restore eexit_target and ursp
+#if !BARE_TRTS_AEX_NOTIFY
+	jmp .ecall_ret
+#else
+	# discard eexit_target and ursp
 	pop	    %rcx
-	pop	    %rsp
+	pop	    %rcx
 
 .restore_ssa_0_state:
 	/*
-	* Calculate SSA[0] frame adress
+	* Calculate SSA[0].sgx_gpr adress
 	* frame = TCS + 4096 + (CSSA-1)*4096 = TCS + CSSA*4096
 	* sgx_gpr is last 184 bytes of ssa frame: 4096 - 184 = 3912
+	*
+	* \note: current exception handling implementation assumes ssaframesize = 1 page
 	*/
 	mov 	%rbx, %rcx		# RCX = TCS
-	add     $4096, %rcx		# RCX = SSA[0]
-	add     $3912, %rcx		# RCX = sgx_gpr
+	# add     $4096, %rcx		# RCX = SSA[0]
+	# add     $3912, %rcx		# RCX = sgx_gpr
+	add     $PAGE_SIZE+SSA_FRAME_BEFORE_GPR_SIZE, %rcx		# RCX = &SSA[0].GPRSGX
 
-	/* restore other registers */
+	/* restore SSA[0] GPRs (except those used in the atomic stub)  */
     mov     8*5(%rcx), %rbp
     mov     8*6(%rcx), %rsi
     mov     8*7(%rcx), %rdi
@@ -134,13 +151,13 @@ encl_entry:
     popf
     mov     8*4(%rcx), %rsp
 
-    .global atomic_start
-atomic_start:
-	# EDECCSSA
     movq	$9, %rax
+	.global atomic_start
+atomic_start:
+	# EDECCSSA : this will re-enable aexnotify and should be atomic
+	# : this will #UD on procesors that do not support aexnotify
     enclu
-
-	lea	encl_stack(%rip), %rdx 	# stack base addres
+	lea	encl_stack_top(%rip), %rdx 	# stack top addres
 
 	movq aex_rip(%rip), %rbx	# interrputed instruction
 	movl    $12, %ecx
@@ -156,8 +173,6 @@ atomic_start:
 	jrcxz   .restore_last_regs  # if ecx == 0, exit loop
     jmp     .prefetch_loop 		# loop back (loops 64 times)
 
-
-
 .restore_last_regs:
     # Restore RAX and jump to RIP
     movq   	aex_rax(%rip), %rax
@@ -168,13 +183,8 @@ atomic_start:
 
     .global atomic_end
 atomic_end:
-
-#else
-	jmp .cleanup
 #endif
 
-#else
-	ud2
 #endif
 
     .global get_enclave_base
@@ -189,7 +199,7 @@ get_enclave_size:
 	mov 	__enclave_size(%rip), %rax
 	ret
 
-#if BARE_TRTS_AEX_NOTIFY
+#if BARE_TRTS_EXCEPTION_HANDLING && BARE_TRTS_AEX_NOTIFY
 	/*
 	 * Manual wrappers to ensure these are PIC-relative to enclave base
 	 */
@@ -214,7 +224,6 @@ encl_stack:
 	.balign 4096
 	.space 4096
 encl_exc_stack:
-#endif
 
 #if BARE_TRTS_AEX_NOTIFY
 .data
@@ -235,6 +244,7 @@ aex_rdx:
     .global aex_rbx
 aex_rbx:
     .quad 0
+#endif
 #endif
 
 	# The following 8 bytes (measured as part of MRENCLAVE) will be

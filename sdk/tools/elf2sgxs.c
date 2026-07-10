@@ -129,11 +129,11 @@ static int parse_args(int argc, char *argv[])
         if (!strcmp(argv[i], "--ssaframesize")) {
             BARESGX_ASSERT_RET((i+1) < argc, "ssaframesize");
             g_ssa_frame_size = atoi(argv[++i]);
-            BARESGX_ASSERT_RET(g_ssa_frame_size > 0, "ssaframesize");
+            BARESGX_ASSERT_RET(g_ssa_frame_size == 1, "ssaframesize, must be 1 for current exception handling implementation");
+            //BARESGX_ASSERT_RET(g_ssa_frame_size > 0, "ssaframesize"); // to be reinstated when exception handling can handle larger SSA frame sizes
         } else if (!strcmp(argv[i], "--nssa")) {
             BARESGX_ASSERT_RET((i+1) < argc, "nssa");
             g_nssa = atoi(argv[++i]);
-            //BARESGX_ASSERT_RET(g_nssa == 1, "nssa (exceptions not supported)");
             BARESGX_ASSERT_RET(g_nssa > 0, "nssa");
         } else if (!strcmp(argv[i], "--aexnotify")) {
             g_aexnotify =1;

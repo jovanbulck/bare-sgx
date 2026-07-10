@@ -3,12 +3,8 @@
 
 #include "test_encl.h"
 #include "baresgx/trts.h"
-
-//TODO cleaner way to add this.
 #include "internal/sgx-defs.h"
 
-#define SGX_EXCEPTION_VECTOR_UD 6 // for others see SDM Vol-3D part-4 Table 38.9.1.2
-#define SGX_EXCEPTION_HARDWARE 3
 #define CPUID_OPCODE 0xA20F
 #define UD2_OPCODE 0x0B0F
 
@@ -107,14 +103,8 @@ volatile encl_op_t encl_op_array[ENCL_OP_MAX] = {
 	do_encl_op_return,
 };
 
-void encl_body(void *rdi, void *rsi)
+void encl_body(void *rdi)
 {
-	//set ssa_aex_notify
-	struct sgx_tcs *tcs = (struct sgx_tcs *)rsi;
-	struct ssa_frame *frame = (struct ssa_frame *)((uint64_t)tcs + 4096);
-	//(void) frame;
-	frame->sgx_gpr.reserved.aex_notify = 1; // segfaults on 1, but should work
-
 	//regular operation dispatch
 	encl_op_t op;
 	struct encl_op_header header;
@@ -142,14 +132,8 @@ Registers upon entry:
     RSI - CSSA
     RDX - TCS
 */
-void encl_exception_handler(void *rdi, void *rsi, void *rdx)
+void encl_exception_handler(struct sgx_tcs *tcs)
 {
-	(void)rdi;
-	(void)rsi;
-    //uint64_t cssa = (uint64_t)rsi;
-
-    struct sgx_tcs *tcs = (struct sgx_tcs *)rdx;
-
 	struct ssa_frame *frame = (struct ssa_frame *)((uint64_t)tcs + 4096);
 
     if (frame->sgx_gpr.exitinfo.valid == 1 &&

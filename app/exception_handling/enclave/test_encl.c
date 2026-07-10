@@ -125,14 +125,8 @@ Registers upon entry:
     RSI - CSSA
     RDX - TCS
 */
-void encl_exception_handler(void *rdi, void *rsi, void *rdx)
+void encl_exception_handler(struct sgx_tcs *tcs)
 {
-	(void)rdi;
-	(void)rsi;
-    //uint64_t cssa = (uint64_t)rsi;
-
-    struct sgx_tcs *tcs = (struct sgx_tcs *)rdx;
-
 	struct ssa_frame *frame = (struct ssa_frame *)((uint64_t)tcs + 4096);
 
     if (frame->sgx_gpr.exitinfo.valid == 1 &&

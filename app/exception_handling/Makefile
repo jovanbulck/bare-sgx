@@ -19,7 +19,7 @@ CLEANDIRS       = $(SUBDIRS:%=clean-%)
 all: $(OUTPUT)
 
 $(OUTPUT): $(BUILDDIRS) $(OBJECTS)
-	$(LD) $(OBJECTS) $(LDFLAGS) -o $(OUTPUT) 
+	$(LD) $(OBJECTS) $(LDFLAGS) -o $(OUTPUT)
 
 %.o : %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDE) -c $< -o $@
