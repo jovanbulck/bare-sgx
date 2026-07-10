@@ -11,12 +11,15 @@ SOURCES         = $(shell ls *.c)
 
 INCLUDE         = -I$(BARESGX)/include/
 CFLAGS         += -Wall -Werror -static-pie -nostdlib -ffreestanding -fPIE \
-        		       -fno-stack-protector -mno-sse -mrdrnd -Os
+        		       -fno-stack-protector -mno-sse -mrdrnd -Os \
+					   -DBARE_TRTS_EXCEPTION_HANDLING=1 -DBARE_TRTS_AEX_NOTIFY=0
 LDFLAGS        := -T $(TRTS)/enclave.lds -Wl,--build-id=none -z noexecstack \
                   -lbare-trts -L$(TRTS)
 
 BUILDDIRS       = $(SUBDIRS:%=build-%)
 CLEANDIRS       = $(SUBDIRS:%=clean-%)
+
+export CFLAGS
 
 all: $(BUILDDIRS) encl.elf encl.sgxs encl.sig
 

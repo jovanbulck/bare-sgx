@@ -11,12 +11,15 @@ SOURCES         = $(shell ls *.c)
 
 INCLUDE         = -I$(BARESGX)/include/
 CFLAGS         += -Wall -Werror -static-pie -nostdlib -ffreestanding -fPIE \
-        		       -fno-stack-protector -mno-sse -mrdrnd -Os
+        		       -fno-stack-protector -mno-sse -mrdrnd -Os \
+					   -DBARE_TRTS_EXCEPTION_HANDLING=0 -DBARE_TRTS_AEX_NOTIFY=0
 LDFLAGS        := -T $(TRTS)/enclave.lds -Wl,--build-id=none -z noexecstack \
                   -lbare-trts -L$(TRTS)
 
 BUILDDIRS       = $(SUBDIRS:%=build-%)
 CLEANDIRS       = $(SUBDIRS:%=clean-%)
+
+export CFLAGS
 
 all: $(BUILDDIRS) encl.elf encl.sgxs encl.sig
 
@@ -28,12 +31,12 @@ all: $(BUILDDIRS) encl.elf encl.sgxs encl.sig
 	sgxs-info summary $@ || true
 	sha256sum $@ || true
 
-%.sig: %.sgxs $(PRIVATE_KEY) 
+%.sig: %.sgxs $(PRIVATE_KEY)
 	$(TOOLS)/sgxs-sign $< $(PRIVATE_KEY) $@
 
 $(PRIVATE_KEY):
 	openssl genrsa -3 3072 > $(PRIVATE_KEY)
-	openssl rsa -in $(PRIVATE_KEY) -pubout -out $(PUBLIC_KEY) 
+	openssl rsa -in $(PRIVATE_KEY) -pubout -out $(PUBLIC_KEY)
 
 $(BUILDDIRS):
 	$(MAKE) -C $(@:build-%=%)
