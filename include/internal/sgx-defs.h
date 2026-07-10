@@ -283,12 +283,27 @@ struct exit_info
 	uint32_t valid : 1;		/* 0: unsupported exceptions, 1: Supported exceptions */
 };
 
-struct reserved_field_t
-{
-	uint32_t reserved_1 : 24;
-	uint32_t aex_notify : 1; // Flag enabling AEX-Notify for this SSA context
-	uint32_t reserved_2 : 7;
-};
+#define SGX_EXCEPTION_HARDWARE 3
+#define SGX_EXCEPTION_SOFTWARE 6
+
+/*
+ * Exception vector numbers that can be reported inside an enclave via the
+ * exit_info vector field.
+ * These match standard x86-64 exception numbers.
+ *
+ * SDM Vol-3D part-4 Table 38-10
+*/
+#define SGX_EXCEPTION_VECTOR_DE 0
+#define SGX_EXCEPTION_VECTOR_DB 1
+#define SGX_EXCEPTION_VECTOR_BP 3
+#define SGX_EXCEPTION_VECTOR_BR 5
+#define SGX_EXCEPTION_VECTOR_UD 6
+#define SGX_EXCEPTION_VECTOR_GP 13
+#define SGX_EXCEPTION_VECTOR_PF 14
+#define SGX_EXCEPTION_VECTOR_MF 16
+#define SGX_EXCEPTION_VECTOR_AC 17
+#define SGX_EXCEPTION_VECTOR_XM 19
+
 
 struct gprsgx
 {
@@ -314,7 +329,8 @@ struct gprsgx
 	uint64_t urbp;	   /*Non-Enclave (outside) RBP pointer. Saved by EENTER, restored on AEX.*/
 	struct exit_info exitinfo; /*Contains information about exceptions that cause AEXs,
 						*which might be needed by enclave software (see Section 38.9.1.1).*/
-	struct reserved_field_t reserved; /* bits 0-23: reserved, bit 24: aex_notify, bits 25-31: reserved*/
+	uint8_t     reserved[3]; /*bits 0-23: reserved*/
+    uint8_t     aex_notify;  /*bit 24: aex_notify, bits 25-31: reserved*/
 	uint64_t fsbase;
 	uint64_t gsbase;
 };

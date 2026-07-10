@@ -5,6 +5,7 @@
 #define ENCLAVE_SGXS    "enclave/encl.sgxs"
 #define ENCLAVE_SIG     "enclave/encl.sig"
 #define ENCLAVE_DEBUG   0
+#define ENCLAVE_AEX_NOTIFY  0
 
 extern uint64_t g_encl_base, g_encl_size;
 
@@ -20,7 +21,7 @@ int main(void)
     uint64_t rv = -1;
     void *tcs;
 
-    tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG);
+    tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG, ENCLAVE_AEX_NOTIFY);
     baresgx_info("loaded enclave at %p", tcs);
 
     baresgx_info("reading enclave memory..");

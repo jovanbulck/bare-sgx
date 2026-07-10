@@ -61,7 +61,7 @@ static inline char *hex_str(void *buf, size_t len)
 {
     #define HEX_STR_SLOTS    8
     #define HEX_STR_MAX_LEN  256
-    
+
     static char pool[HEX_STR_SLOTS][HEX_STR_MAX_LEN * 2 + 1];
     static unsigned int slot = 0;
     BARESGX_ASSERT(buf && len && len <= HEX_STR_MAX_LEN);

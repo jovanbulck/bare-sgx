@@ -8,6 +8,8 @@
 #define ENCLAVE_SGXS    "enclave/encl.sgxs"
 #define ENCLAVE_SIG     "enclave/encl.sig"
 #define ENCLAVE_DEBUG   0
+#define ENCLAVE_AEX_NOTIFY   0
+
 
 extern uint64_t g_encl_base, g_encl_size;
 
@@ -38,11 +40,7 @@ int main(void)
     sigemptyset(&sa_ill.sa_mask);
     sa_ill.sa_flags = SA_SIGINFO;
 
-    if (sigaction(SIGILL, &sa_ill, NULL) == -1)
-    {
-        perror("sigaction illegal_instruction_handler not regestered correctly");
-        return 1;
-    }
+    BARESGX_ASSERT(sigaction(SIGILL, &sa_ill, NULL) != -1);
 
     uint64_t encl_base = 0, encl_size = 0;
     struct encl_op_math arg;
@@ -54,7 +52,7 @@ int main(void)
     uint64_t rv = -1;
     //void *tcs;
 
-    tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG);
+    tcs = baresgx_load_sgxs_enclave(ENCLAVE_SGXS, ENCLAVE_SIG, ENCLAVE_DEBUG, ENCLAVE_AEX_NOTIFY);
     baresgx_info("loaded enclave at %p", tcs);
 
     baresgx_info("reading enclave memory..");
