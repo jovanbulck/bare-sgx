@@ -36,8 +36,6 @@ encl_entry:
     # Set frame->sgx_gpr.aex_notify = 1 for SSA[0]
     # sgx_gpr = TCS + 4096 + 3912
     mov	%rbx, %rcx
-    # add	$4096, %rcx
-    # add	$3912, %rcx
     add	$PAGE_SIZE+SSA_FRAME_BEFORE_GPR_SIZE, %rcx
     # aex_notify is the 167th byte within gprsgx
     movb	$1, 167(%rcx)
@@ -118,7 +116,6 @@ encl_entry:
 	pop	    %rcx
 	pop	    %rcx
 
-.restore_ssa_0_state:
 	/*
 	* Calculate SSA[0].sgx_gpr adress
 	* frame = TCS + 4096 + (CSSA-1)*4096 = TCS + CSSA*4096
@@ -126,9 +123,36 @@ encl_entry:
 	*
 	* \note: current exception handling implementation assumes ssaframesize = 1 page
 	*/
-	mov 	%rbx, %rcx		                   # RCX = TCS
-  add     $PAGE_SIZE+SSA_FRAME_BEFORE_GPR_SIZE, %rcx # RCX = &SSA[0].GPRSGX
+	mov 	%rbx, %rcx		                  			# RCX = TCS
+  	add     $PAGE_SIZE+SSA_FRAME_BEFORE_GPR_SIZE, %rcx 	# RCX = &SSA[0].GPRSGX
 
+    # Save interrupted state unless RIP is inside [atomic_start, atomic_end)
+    mov     8*17(%rcx), %r9                             # r9 = RIP
+
+    lea     atomic_start(%rip), %r10
+    cmp     %r10, %r9
+    jb      .restart_atomic_section
+
+    lea     atomic_end(%rip), %r10
+    cmp     %r10, %r9
+    jb      .restore_ssa_0_state
+
+.restart_atomic_section:
+    mov     %r9, aex_rip(%rip)
+
+    mov     8*0(%rcx), %r10
+    mov     %r10, aex_rax(%rip)
+
+    mov     8*1(%rcx), %r10
+    mov     %r10, aex_rcx(%rip)
+
+    mov     8*2(%rcx), %r10
+    mov     %r10, aex_rdx(%rip)
+
+    mov     8*3(%rcx), %r10
+    mov     %r10, aex_rbx(%rip)
+
+.restore_ssa_0_state:
 	/* restore SSA[0] GPRs (except those used in the atomic stub)  */
     mov     8*5(%rcx), %rbp
     mov     8*6(%rcx), %rsi

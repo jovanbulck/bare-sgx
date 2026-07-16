@@ -156,10 +156,6 @@ void encl_body(void *rdi)
 	(*op)(rdi);
 }
 
-extern uint64_t aex_rip, aex_rax, aex_rcx, aex_rdx, aex_rbx;
-extern uint64_t get_atomic_start();
-extern uint64_t get_atomic_end();
-
 /*
 Registers upon entry:
     RDI - exit_info
@@ -168,7 +164,7 @@ Registers upon entry:
 */
 void encl_exception_handler(struct sgx_tcs *tcs)
 {
-	struct ssa_frame *frame = (struct ssa_frame *)((uint64_t)tcs + 4096);
+	struct ssa_frame *frame = (struct ssa_frame *)((uint64_t)tcs + PAGE_SIZE);
 
     if (frame->sgx_gpr.exitinfo.valid == 1 &&
         frame->sgx_gpr.exitinfo.vector == SGX_EXCEPTION_VECTOR_UD &&
@@ -179,14 +175,4 @@ void encl_exception_handler(struct sgx_tcs *tcs)
 
 	/*Interrupt counting*/
     aex_counter_mitigation();
-
-	 /* AEX-Notify restartable atomic section */
-    if (!(frame->sgx_gpr.rip >= get_atomic_start() && frame->sgx_gpr.rip < get_atomic_end()))
-    {
-        aex_rip = frame->sgx_gpr.rip;
-        aex_rax = frame->sgx_gpr.rax;
-        aex_rcx = frame->sgx_gpr.rcx;
-        aex_rdx = frame->sgx_gpr.rdx;
-        aex_rbx = frame->sgx_gpr.rbx;
-    }
 }
