@@ -12,7 +12,7 @@
 int g_elf_fd = 0, g_sgxs_fd = 0;
 size_t g_sgxs_offset = 0;
 uint64_t g_enclave_size = 1;
-static unsigned int g_ssa_frame_size = 1, g_nssa = 1, g_ntcs = 1;
+static unsigned int g_ssa_frame_size = 1, g_nssa = 1, g_ntcs = 1, g_aexnotify = 0;
 static const char *g_entry_symbol = "encl_entry";
 
 #define ELF_MAGIC 0x464C457FU
@@ -41,13 +41,13 @@ static void sgxs_add_guard_page(void)
     g_sgxs_offset &= PAGE_MASK;
     g_sgxs_offset += PAGE_SIZE;
 }
-    
+
 static void sgxs_add_page(const void* data, uint64_t secinfo_flags, int measure)
 {
     struct sgxs_eadd eadd = {0x00};
     struct sgxs_eextend eextend = {0x00};
     int i;
-    
+
     BARESGX_ASSERT(IS_PAGE_ALIGNED(g_sgxs_offset));
     eadd.tag = SGXS_TAG_EADD;
     eadd.offset = g_sgxs_offset;
@@ -129,11 +129,14 @@ static int parse_args(int argc, char *argv[])
         if (!strcmp(argv[i], "--ssaframesize")) {
             BARESGX_ASSERT_RET((i+1) < argc, "ssaframesize");
             g_ssa_frame_size = atoi(argv[++i]);
-            BARESGX_ASSERT_RET(g_ssa_frame_size > 0, "ssaframesize");
+            BARESGX_ASSERT_RET(g_ssa_frame_size == 1, "ssaframesize, must be 1 for current exception handling implementation");
+            //BARESGX_ASSERT_RET(g_ssa_frame_size > 0, "ssaframesize"); // to be reinstated when exception handling can handle larger SSA frame sizes
         } else if (!strcmp(argv[i], "--nssa")) {
             BARESGX_ASSERT_RET((i+1) < argc, "nssa");
             g_nssa = atoi(argv[++i]);
-            BARESGX_ASSERT_RET(g_nssa == 1, "nssa (exceptions not supported)");
+            BARESGX_ASSERT_RET(g_nssa > 0, "nssa");
+        } else if (!strcmp(argv[i], "--aexnotify")) {
+            g_aexnotify =1;
         } else if (!strcmp(argv[i], "--entry")) {
             BARESGX_ASSERT_RET((i+1) < argc, "entry");
             g_entry_symbol = argv[++i];
@@ -169,9 +172,9 @@ int main(int argc, char *argv[])
     const char *name;
     struct stat sb;
     uint64_t flags;
-    
+
     if (parse_args(argc, argv) < 0) {
-        fprintf(stderr, "Usage: %s [--ssaframesize=N] [--nssa=N] [--entry=symbol_name] <input_elf> <output_sgxs>\n", argv[0]);
+        fprintf(stderr, "Usage: %s [--ssaframesize=N] [--nssa=N] [--entry=symbol_name] [--aexnotify] <input_elf> <output_sgxs>\n", argv[0]);
         return -1;
     }
 
@@ -221,12 +224,15 @@ int main(int argc, char *argv[])
 
     /* finally add the TCS and SSA pages based on the user input */
     sgxs_add_guard_page();
-    
+
     tcs.entry_offset = elf_symbol(g_entry_symbol, elf);
     tcs.ssa_offset = g_sgxs_offset + PAGE_SIZE; /* SSA follows immediately after TCS */
     tcs.nr_ssa_frames = g_nssa;
     tcs.fs_limit = 0xFFFFFFFF;
     tcs.gs_limit = 0xFFFFFFFF;
+
+    if (g_aexnotify)
+        tcs.flags |= SGX_TCS_AEXNOTIFY;
 
     sgxs_add_page(&tcs, SGX_SECINFO_TCS, /*measure=*/1);
     memset(pagebuf, 0x00, PAGE_SIZE);

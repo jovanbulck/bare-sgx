@@ -9,7 +9,7 @@
  *
  * @return      load address of the first TCS in the enclave
  */
-void* baresgx_load_sgxs_enclave(const char* sgxs_path, const char *sigstruct_path, int debug);
+void* baresgx_load_sgxs_enclave(const char* sgxs_path, const char *sigstruct_path, int debug, int aex_notify);
 
 uint64_t baresgx_enter_enclave(void* tcs, uint64_t arg1);
 
@@ -17,5 +17,8 @@ uint64_t baresgx_enter_enclave(void* tcs, uint64_t arg1);
 void* sgx_get_aep(void);
 void  sgx_set_aep(void* aep);
 void* sgx_get_tcs(void);
+
+int get_aep_counter(void);
+void reset_aep_counter(void);
 
 #endif

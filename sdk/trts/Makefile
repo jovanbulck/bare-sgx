@@ -3,8 +3,6 @@ BARESGX          = ../..
 
 CC              := gcc
 INCLUDE         := -I$(BARESGX)/include/
-CFLAGS          += -Wall -Werror -static-pie -nostdlib -ffreestanding -fPIE \
-        		  -fno-stack-protector -mno-sse -mrdrnd $(INCLUDE) -Os
 AR              := ar
 ARFLAGS         := -rcs
 

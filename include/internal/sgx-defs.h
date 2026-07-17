@@ -1,6 +1,7 @@
 #ifndef SGX_DEFS_H_INC
 #define SGX_DEFS_H_INC
 #include "util.h"
+#include "arch.h"
 
 /*
  * Architectural definitions of SGX structures, as defined in Intel SDM and
@@ -60,6 +61,17 @@ struct sgx_secs {
 struct sgx_secinfo {
 	uint64_t flags;
 	uint8_t  reserved[56];
+};
+
+/**
+ * enum sgx_tcs_flags - execution flags for TCS
+ * @SGX_TCS_DBGOPTIN:	If enabled allows single-stepping and breakpoints
+ *			inside an enclave. It is cleared by EADD but can
+ *			be set later with EDBGWR.
+ */
+enum sgx_tcs_flags {
+	SGX_TCS_DBGOPTIN	= 0x01,
+	SGX_TCS_AEXNOTIFY	= 0x02,
 };
 
 /**
@@ -255,5 +267,79 @@ MK_ENUM(sgx_attribute, SGX_ATTR_LIST);
     X(SGX_MISC_CPINFO,             BIT(1))
 
 MK_ENUM(sgx_miscselect, SGX_MISC_LIST);
+
+/*
+ * Based on https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3d-part-4-manual.pdf
+ * Table 38-7, 38-8 and 38-9
+ */
+
+struct exit_info
+{
+	uint32_t vector : 8;	/* Exception number of exceptions reported inside enclave */
+	uint32_t exit_type : 3; /* 011b: Hardware exceptions.
+							   110b: Software exceptions.
+							   Other values: Reserved */
+	uint32_t reserved : 20; /* Reserved as zero*/
+	uint32_t valid : 1;		/* 0: unsupported exceptions, 1: Supported exceptions */
+};
+
+#define SGX_EXCEPTION_HARDWARE 3
+#define SGX_EXCEPTION_SOFTWARE 6
+
+/*
+ * Exception vector numbers that can be reported inside an enclave via the
+ * exit_info vector field.
+ * These match standard x86-64 exception numbers.
+ *
+ * SDM Vol-3D part-4 Table 38-10
+*/
+#define SGX_EXCEPTION_VECTOR_DE 0
+#define SGX_EXCEPTION_VECTOR_DB 1
+#define SGX_EXCEPTION_VECTOR_BP 3
+#define SGX_EXCEPTION_VECTOR_BR 5
+#define SGX_EXCEPTION_VECTOR_UD 6
+#define SGX_EXCEPTION_VECTOR_GP 13
+#define SGX_EXCEPTION_VECTOR_PF 14
+#define SGX_EXCEPTION_VECTOR_MF 16
+#define SGX_EXCEPTION_VECTOR_AC 17
+#define SGX_EXCEPTION_VECTOR_XM 19
+
+
+struct gprsgx
+{
+	uint64_t rax;
+	uint64_t rcx;
+	uint64_t rdx;
+	uint64_t rbx;
+	uint64_t rsp;
+	uint64_t rbp;
+	uint64_t rsi;
+	uint64_t rdi;
+	uint64_t r8;
+	uint64_t r9;
+	uint64_t r10;
+	uint64_t r11;
+	uint64_t r12;
+	uint64_t r13;
+	uint64_t r14;
+	uint64_t r15;
+	uint64_t rflags;   /*Flag register*/
+	uint64_t rip;	   /*Instruction pointer*/
+	uint64_t ursp;	   /*Non-Enclave (outside) stack pointer. Saved by EENTER, restored on AEX.*/
+	uint64_t urbp;	   /*Non-Enclave (outside) RBP pointer. Saved by EENTER, restored on AEX.*/
+	struct exit_info exitinfo; /*Contains information about exceptions that cause AEXs,
+						*which might be needed by enclave software (see Section 38.9.1.1).*/
+	uint8_t     reserved[3]; /*bits 0-23: reserved*/
+    uint8_t     aex_notify;  /*bit 24: aex_notify, bits 25-31: reserved*/
+	uint64_t fsbase;
+	uint64_t gsbase;
+};
+_Static_assert(sizeof(struct gprsgx) == GPRSGX_SIZE);
+
+struct ssa_frame
+{
+	uint8_t rest[SSA_FRAME_BEFORE_GPR_SIZE];
+	struct gprsgx sgx_gpr;
+};
 
 #endif
